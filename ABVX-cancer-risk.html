@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ABVX — Obefazimod Cancer-Risk Verification</title>
+<style>
+:root{
+  --navy:#1B2A4A;--steel-blue:#4A6FA5;--gold:#C5A55A;--green:#27AE60;--red:#C0392B;
+  --light-gray:#F8F9FA;--mid-gray:#E9ECEF;--dark-gray:#6C757D;--near-black:#343A40;
+}
+@page{size:A4;margin:18mm 13mm;}
+*{box-sizing:border-box;}
+body{font-family:"Segoe UI",-apple-system,BlinkMacSystemFont,Arial,sans-serif;font-size:12px;line-height:1.6;color:var(--near-black);margin:0 auto;padding:20px 40px;max-width:1120px;}
+h1{font-size:24px;font-weight:bold;color:var(--navy);border-bottom:3px solid var(--navy);padding-bottom:8px;margin:0 0 6px;}
+h2{font-size:18px;font-weight:bold;color:var(--navy);border-bottom:1px solid var(--mid-gray);padding-bottom:4px;margin:28px 0 12px;}
+h3{font-size:14px;font-weight:bold;color:var(--steel-blue);margin:18px 0 8px;}
+p{margin-bottom:8px;}
+a{color:var(--steel-blue);text-decoration:none;}
+strong{font-weight:600;}
+em{font-style:italic;color:var(--dark-gray);}
+.sub{color:var(--dark-gray);font-size:11px;margin-bottom:2px;}
+.meta{background:var(--light-gray);border:1px solid var(--mid-gray);border-radius:4px;padding:10px 14px;font-size:11px;margin:12px 0 6px;}
+.meta b{color:var(--navy);}
+blockquote{border-left:4px solid var(--steel-blue);background:var(--light-gray);padding:10px 14px;margin:10px 0;font-size:11px;}
+table{width:100%;border-collapse:collapse;margin:12px 0;font-size:11px;font-variant-numeric:tabular-nums;}
+thead{background:var(--navy);color:#fff;}
+th{padding:7px 9px;text-align:left;font-weight:600;font-size:9.5px;text-transform:uppercase;letter-spacing:.4px;}
+td{padding:6px 9px;border-bottom:1px solid var(--mid-gray);vertical-align:top;}
+td:not(:first-child),th:not(:first-child){text-align:right;}
+table.lt td:not(:first-child),table.lt th:not(:first-child){text-align:left;}
+tr:nth-child(even){background:var(--light-gray);}
+.status{display:inline-block;padding:2px 7px;border-radius:10px;font-size:8.5px;font-weight:600;text-transform:uppercase;letter-spacing:.3px;white-space:nowrap;}
+.status.verified{background:rgba(39,174,96,.15);color:var(--green);border:1px solid rgba(39,174,96,.3);}
+.status.partial{background:rgba(197,165,90,.18);color:#8a6f30;border:1px solid rgba(197,165,90,.4);}
+.status.inconsistent{background:rgba(192,57,43,.13);color:var(--red);border:1px solid rgba(192,57,43,.3);}
+.status.unverifiable{background:var(--mid-gray);color:var(--dark-gray);border:1px solid var(--dark-gray);}
+.flag-card{border-left:4px solid var(--red);background:var(--light-gray);padding:9px 13px;margin:9px 0;}
+.flag-card.good{border-left-color:var(--green);}
+.flag-card .num{display:inline-block;background:var(--red);color:#fff;width:21px;height:21px;border-radius:50%;text-align:center;line-height:21px;font-size:11px;font-weight:600;margin-right:7px;}
+.flag-card.good .num{background:var(--green);}
+.kbox{border:1px solid var(--mid-gray);border-top:3px solid var(--steel-blue);background:#fff;padding:12px 16px;margin:14px 0;}
+.kbox.red{border-top-color:var(--red);}
+.kbox.green{border-top-color:var(--green);}
+.banner{background:rgba(192,57,43,.10);border:1px solid rgba(192,57,43,.35);border-radius:4px;padding:10px 14px;margin:12px 0;font-size:11px;}
+.banner b{color:var(--red);}
+.two{display:flex;gap:16px;}
+.two>div{flex:1;}
+.hi-red{color:var(--red);font-weight:600;}
+.hi-grn{color:var(--green);font-weight:600;}
+ul{margin:4px 0 8px;padding-left:20px;}li{margin-bottom:4px;}
+.small{font-size:10px;color:var(--dark-gray);}
+.toc{font-size:11px;margin:8px 0 0;display:flex;gap:34px;}
+.toc-col{flex:1;display:flex;flex-direction:column;gap:5px;}
+.toc-col a{display:block;line-height:1.4;}
+.footer{text-align:center;font-size:9px;color:var(--dark-gray);font-style:italic;margin-top:28px;padding-top:8px;border-top:1px solid var(--mid-gray);}
+.tag{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--dark-gray);}
+.fill{background:repeating-linear-gradient(45deg,#fff,#fff 6px,#fcf6e8 6px,#fcf6e8 12px);border:1px dashed var(--gold)!important;color:#8a6f30;font-style:italic;text-align:center!important;}
+.watch{background:rgba(197,165,90,.14);border:1px solid var(--gold);border-radius:4px;padding:10px 14px;margin:12px 0;font-size:11px;}
+.watch b{color:#8a6f30;}
+.sc-rule{counter-reset:scstep;list-style:none;padding-left:0;margin:6px 0;}
+.sc-rule li{position:relative;padding-left:30px;margin-bottom:6px;}
+.sc-rule li:before{counter-increment:scstep;content:counter(scstep);position:absolute;left:0;top:0;background:var(--navy);color:#fff;width:20px;height:20px;border-radius:50%;text-align:center;line-height:20px;font-size:11px;font-weight:600;}
+table.score thead{background:var(--steel-blue);}
+table.score .bg-col{background:rgba(197,165,90,.10);}
+.legend-pill{display:inline-block;padding:1px 6px;border-radius:8px;font-size:9px;font-weight:600;margin-right:4px;}
+.lp-below{background:rgba(39,174,96,.15);color:var(--green);border:1px solid rgba(39,174,96,.3);}
+.lp-in{background:rgba(197,165,90,.18);color:#8a6f30;border:1px solid rgba(197,165,90,.4);}
+.lp-above{background:rgba(192,57,43,.13);color:var(--red);border:1px solid rgba(192,57,43,.3);}
+</style>
+</head>
+<body>
+
+<h1>Abivax (ABVX) — Obefazimod Cancer Cases: Verification, Recalculation &amp; Context</h1>
+<div class="sub">Audit of the ABTECT Phase 3 malignancy disclosures, the company's background-rate framework, and the circulating "pooled-data" bull thesis</div>
+
+<div class="meta">
+<b>Date:</b> 15 June 2026 <span class="small">(updated 19 Jun 2026 — added Readout Scorecard + @seedy19tron model)</span> &nbsp;|&nbsp; <b>Ticker:</b> ABVX (Abivax SA) &nbsp;|&nbsp; <b>Asset:</b> obefazimod (ABX464) — oral miR-124 enhancer, moderate-to-severe ulcerative colitis<br>
+<b>Primary documents audited (saved in <code>cancer risk/sources/</code> and the ABVX dataroom):</b> (1) <em>ABTECT Maintenance Topline Webcast</em>, 1 Jun 2026 [Deck 1]; (2) <em>ABTECT Maintenance Part 2 Primer</em>, 15 Jun 2026 [Deck 2]; (3) ABVX <em>20-F FY2025</em>, 23 Mar 2026; (4) ABVX <em>6-K Q1-2026 Business Update</em> (Study 108 three-year interim), 22 May 2026; (5) FDA labels/reviews XELJANZ, RINVOQ, VELSIPITY; (6) PubMed primary literature; (7) a third-party "pooled patient-level" analysis circulating on X; (8) <em>"ABVX malignancy estimate"</em> — emailed by Norbert 19 Jun 2026, a screenshot of @seedy19tron's ABVX malignancy <strong>projection model</strong> (<a href="https://x.com/seedy19tron/status/2067745307069497566">x.com/seedy19tron/status/2067745307069497566</a>), transcribed verbatim and benchmarked in the Readout Scorecard below.<br>
+<b>Mandate:</b> verify the company's claims to their cited sources; recompute patient-year exposure independently; test whether observed cancer rates are within background against three comparators; assess per-case causality; and pressure-test the circulating bull "pooled" sheet.
+</div>
+
+<div class="toc">
+<div class="toc-col">
+<a href="#sec1">1 · Net Read</a>
+<a href="#scorecard"><b>★ Readout Scorecard (next-week comparison)</b></a>
+<a href="#sec2">2 · What was disclosed</a>
+<a href="#sec3">3 · Independent patient-year recalc</a>
+<a href="#sec4">4 · Observed rates vs benchmark</a>
+<a href="#sec5">5 · Verification of the background-rate sources</a>
+</div>
+<div class="toc-col">
+<a href="#sec6">6 · Three-comparator triangulation</a>
+<a href="#sec7">7 · Per-case causality</a>
+<a href="#sec8">8 · Mechanism: the three carcinogenesis pathways</a>
+<a href="#sec9">9 · Audit of the circulating "pooled" bull sheet</a>
+<a href="#leastconfident"><b>★ What I'm least confident about</b></a>
+<a href="#sec10">10 · Confidence, gaps &amp; follow-up</a>
+</div>
+</div>
+
+<h2 id="sec1">1 — Net Read</h2>
+<div class="kbox">
+<p><strong>The drug is very unlikely to be causing these cancers — but both the company and the loudest bulls are over-stating the <em>certainty</em>, and the reassurance rests on (a) a background benchmark skewed high and (b) data that pool away a real 50&nbsp;mg-concentrated signal.</strong></p>
+<ol>
+<li><strong>Biology strongly favours "not drug-caused."</strong> Obefazimod's sole defined action is up-regulating <strong>miR-124, a tumour <u>suppressor</u></strong> silenced across cancers — mechanistically the opposite of a carcinogen; it is <strong>not a classical immunosuppressant</strong> and not a kinase inhibitor, so the JAK-class malignancy rationale does not transfer; and the <strong>latencies are far too short</strong> — invasive breast (≈6.8&nbsp;mo) and Gleason-7 prostate (≈8.5&nbsp;mo) cancers were almost certainly subclinical at enrolment and screen-detected.</li>
+<li><strong>But "within background" is built on an inflated yardstick.</strong> Abivax's derived ranges (NMSC 0.7–1.4; non-NMSC 0.3–0.7 / 100 PY) are anchored on <strong>immunosuppressant-treated</strong> IBD cohorts — the NMSC ceiling (1.36) is literally the 5th cumulative year of thiopurine exposure — plus a "5× prostate" figure that <span class="hi-red">is not in the cited paper</span> and a breast <em>prevalence</em> passed off as incidence. A mechanism-matched UC baseline is closer to NMSC ~0.4–0.9 / non-NMSC ~0.3–0.5.</li>
+<li><strong>My independent recalculation shows the 50&nbsp;mg arm runs above even those inflated ceilings</strong> (maintenance-matched NMSC 2.82 vs 1.4; non-NMSC 1.41 vs 0.7 / 100 PY), with all non-NMSC malignancies and 4 of 5 obefazimod NMSC cases in the 50&nbsp;mg arm — a dose-response is a classic causal fingerprint. <strong>The decisive caveat is statistical, not exculpatory:</strong> with 2–4 events the 95% CIs are enormous and overlap background, so nothing is conclusive either way. The 25&nbsp;mg arm is clean.</li>
+<li><strong>The circulating bull "pooled" sheet reaches the right base case but is a synthesis, not a primary source.</strong> About half traces to real disclosures (the deck; the 22 May Study 108 6-K); it uses optimistic 100%-completion patient-years and a 25&nbsp;mg dose-attribution that flatters. <strong>Update (15 Jun):</strong> the ABX464-104 protocol (NCT04023396) now <em>verifies</em> the sheet's genotoxicity rows (Ames/micronucleus negative) to a primary source — but <em>not</em> the carcinogenicity bioassays — and reveals two items the bulls omit: a <strong>phototoxic metabolite</strong> (a drug-specific mechanism for the NMSC cases) and the sponsor's own <strong>pre-specified malignancy AESI</strong> citing a long-term immune/MoA concern. So "no pathway to cancer" is too strong: <em>initiation</em> (genotoxicity) is reasonably excluded, but a <em>local skin-promotion</em> route exists.</li>
+</ol>
+<p><strong>Verdict on the sell-off:</strong> an over-reaction to small numbers in a mechanistically-implausible carcinogen — <em>but not baseless</em>, because the 50&nbsp;mg dose-concentration is real and the genuine open risk (unpublished long-term + preclinical carcinogenicity data) is unresolved. <strong>Probability of a malignancy boxed warning: low</strong> (obe is neither a JAK nor an anti-TNF, the two UC classes that carry one) — but "no boxed warning" is the <em>likely</em>, not the <em>certain</em>, outcome. The end-Q2 Part 2 + Phase 2 combined exposure-adjusted readout is the swing factor.</p>
+</div>
+
+<h2 id="scorecard">★ Readout Scorecard — comparing next week's ABVX print to background, the bull model &amp; our recalc</h2>
+<p class="small"><strong>Purpose.</strong> A fill-in-the-blank scaffold for the end-Q2 Part 2 + Phase 2 exposure-adjusted readout. When ABVX reports the per-100-PY malignancy and NMSC rates by dose, drop their numbers into the <span class="fill" style="padding:1px 5px">ABVX reported</span> column and read the verdict straight off the row. Two reference frames sit on either side: the <strong>bull projection model</strong> from the 19 Jun email (@seedy19tron) and <strong>our independent maintenance-matched recalc</strong> (§3–4). The IBD-background band is the yardstick.</p>
+
+<div class="watch"><b>⚠ The one thing to grab first — the denominator.</b> The bull model and our recalc disagree almost entirely because of <strong>patient-years</strong>, not events. The bull model puts the 50&nbsp;mg arm at <strong>270–843 PY</strong> (pooling Part 1+2, Phase 2 and ~100% completion); our maintenance-matched denominator is <strong>~142 PY</strong>. Same ~3–4 events ÷ a 3–6× larger denominator = a rate that drops from "above background" to "in range." <strong>So the first question on the readout is not the rate — it's which PY ABVX divides by.</strong> If they headline a pooled/OLE denominator, expect "in range"; ask for the clean maintenance-window 50&nbsp;mg rate underneath it.</div>
+
+<div class="kbox"><strong>How to read it in 10 seconds</strong>
+<ol class="sc-rule">
+<li>Find ABVX's reported <strong>50&nbsp;mg</strong> rate (the signal-bearing arm) and the <strong>denominator</strong> they used. Note the 95% CI.</li>
+<li>Compare to the IBD-background band: <span class="legend-pill lp-below">BELOW</span> ≤ low end · <span class="legend-pill lp-in">IN BAND</span> within range · <span class="legend-pill lp-above">ABOVE</span> &gt; high end <em>and</em> CI excludes the band.</li>
+<li>Cross-check vs the two model columns: closer to the <strong>bull model</strong> (≈0.5/0.7) → derisking confirmed; closer to <strong>our recalc</strong> (≈1.4/2.8) on a maintenance denominator → the 50&nbsp;mg signal is real.</li>
+<li>Sanity-check the <strong>count</strong> against the "expected from background" table below: e.g. 270 PY at 50&nbsp;mg should throw ~0.8–1.9 malignancies and ~1.9–3.8 NMSC by chance alone. Reported ≤ that = noise.</li>
+</ol></div>
+
+<h3>Malignancy (excl. NMSC) — events / 100 PY</h3>
+<table class="score">
+<thead><tr><th>Arm</th><th class="bg-col">IBD background</th><th>Bull model (email)</th><th>Our recalc (§4)</th><th>ABVX reported</th><th>Reads as</th></tr></thead>
+<tbody>
+<tr><td>25&nbsp;mg</td><td class="bg-col">0.30–0.70</td><td>0.16–0.38</td><td class="hi-grn">0.00</td><td class="fill">— enter —</td><td class="fill">— □ below □ in □ above —</td></tr>
+<tr><td><strong>50&nbsp;mg</strong></td><td class="bg-col">0.30–0.70</td><td>0.47–0.71</td><td class="hi-red">1.17–1.41</td><td class="fill">— enter —</td><td class="fill">— □ below □ in □ above —</td></tr>
+<tr><td>All obefazimod</td><td class="bg-col">0.30–0.70</td><td>0.32–0.51</td><td>0.60–0.72</td><td class="fill">— enter —</td><td class="fill">— □ below □ in □ above —</td></tr>
+</tbody>
+</table>
+<p class="small"><strong>Reading the model columns.</strong> Bull model range = its two data-cuts (Phase 3 Part 1 → Part 1+2&nbsp;+&nbsp;Phase 2; larger denominators give the lower number). Our recalc range = maintenance-matched → total-obe-exposure denominator (§4). <strong>The gap on the 50&nbsp;mg row is the whole debate:</strong> the bull model lands in-band, our maintenance recalc lands above it — decided entirely by which PY ABVX reports.</p>
+
+<h3>NMSC (basal + squamous skin) — events / 100 PY</h3>
+<table class="score">
+<thead><tr><th>Arm</th><th class="bg-col">IBD background</th><th>Bull model (email)</th><th>Our recalc (§4)</th><th>ABVX reported</th><th>Reads as</th></tr></thead>
+<tbody>
+<tr><td>25&nbsp;mg</td><td class="bg-col">0.70–1.40</td><td>0.88</td><td>0.74</td><td class="fill">— enter —</td><td class="fill">— □ below □ in □ above —</td></tr>
+<tr><td><strong>50&nbsp;mg</strong></td><td class="bg-col">0.70–1.40</td><td>0.74</td><td class="hi-red">2.33–2.82</td><td class="fill">— enter —</td><td class="fill">— □ below □ in □ above —</td></tr>
+<tr><td>All obefazimod</td><td class="bg-col">0.70–1.40</td><td>0.78</td><td class="hi-red">1.49–1.81</td><td class="fill">— enter —</td><td class="fill">— □ below □ in □ above —</td></tr>
+</tbody>
+</table>
+<p class="small">Bull model = its Phase 3 Part 2 NMSC cut. Our recalc range = total-obe → maintenance-matched. <strong>NMSC is the sharper divergence:</strong> the bull model puts the 50&nbsp;mg arm <em>below</em> the NMSC band while our maintenance recalc puts it ~2× <em>above</em> it — again a pure denominator effect (bull 270 PY vs our 142 PY for the same 4 NMSC cases). Watch for a phototoxicity / skin-exam precaution (§8) as the qualitative tell that ABVX takes the NMSC cluster seriously.</p>
+
+<details style="margin:12px 0;">
+<summary style="cursor:pointer;font-weight:600;color:var(--steel-blue);font-size:12px;">▸ Archive: the bull projection model as transcribed from the email screenshot (@seedy19tron, 19 Jun 2026)</summary>
+<p class="small" style="margin-top:8px;">Transcribed verbatim from the emailed screenshot; every projected rate re-derived as count ÷ PY × 100 and confirmed internally consistent. Section-title and left-label columns were cropped out of the screenshot — block titles below are inferred from the denominators and flagged where uncertain. <strong>This is a third-party synthesis, not a primary source</strong> (provenance audited in §9; same caveats apply — optimistic ~100%-completion PY, pooled OLE denominators that smooth the 50&nbsp;mg signal).</p>
+<table class="lt"><thead><tr><th>Block (IBD background)</th><th>Metric</th><th>Placebo</th><th>25&nbsp;mg</th><th>50&nbsp;mg</th><th>All Combined</th></tr></thead>
+<tbody>
+<tr><td rowspan="3"><strong>Malignancy — Phase 3 Part 1</strong><br><span class="small">(title cropped; inferred)</span><br><span class="small">bg 0.30–0.70</span></td><td>Total patient-years</td><td>109</td><td>260</td><td>420</td><td>789</td></tr>
+<tr><td>Projected malignancies</td><td>0.0</td><td>1.0</td><td>3.0</td><td>4.0</td></tr>
+<tr><td>Rate / 100 PY</td><td>0.00</td><td>0.38</td><td>0.71</td><td><strong>0.51</strong></td></tr>
+<tr><td rowspan="3"><strong>Malignancy — Phase 3 Part 1+2 + Phase 2</strong><br><span class="small">bg 0.30–0.70</span></td><td>Total patient-years</td><td>109</td><td>620</td><td>843</td><td>1572</td></tr>
+<tr><td>Projected malignancies</td><td>0.0</td><td>1.0</td><td>4.0</td><td>5.0</td></tr>
+<tr><td>Rate / 100 PY</td><td>0.00</td><td>0.16</td><td>0.47</td><td><strong>0.32</strong></td></tr>
+<tr><td rowspan="3"><strong>NMSC — Phase 3 Part 2</strong><br><span class="small">bg 0.70–1.40</span></td><td>Total patient-years</td><td>N/A</td><td>114</td><td>270</td><td>384</td></tr>
+<tr><td>Projected NMSCs</td><td>N/A</td><td>1.0</td><td>2.0</td><td>3.0</td></tr>
+<tr><td>Rate / 100 PY</td><td>N/A</td><td>0.88</td><td>0.74</td><td><strong>0.78</strong></td></tr>
+</tbody></table>
+<p class="small"><strong>Expected cases from IBD background</strong> (the model's "how many would chance alone throw?" check; cohort labels cropped, identified by PY). NMSC-HIGH column was not present in the screenshot; values in parentheses are derived from the model's own stated NMSC band (×1.40/100).</p>
+<table class="lt"><thead><tr><th>Cohort</th><th>Patient-yrs</th><th>Malig LOW</th><th>Malig HIGH</th><th>NMSC LOW</th><th>NMSC HIGH (derived)</th></tr></thead>
+<tbody>
+<tr><td>25&nbsp;mg (Part 2)</td><td>114</td><td>0.3</td><td>0.8</td><td>0.8</td><td>(1.6)</td></tr>
+<tr><td>50&nbsp;mg (Part 2)</td><td>270</td><td>0.8</td><td>1.9</td><td>1.9</td><td>(3.8)</td></tr>
+<tr><td>All combined (Part 2)</td><td>384</td><td>1.2</td><td>2.7</td><td>2.7</td><td>(5.4)</td></tr>
+</tbody></table>
+<p class="small">Also in the screenshot: an overlaid summary cell-box (row labels cropped) reading <strong>450, 190, 0.60</strong>, plus the model's IBD-background assumptions <strong>Malignancy 0.30–0.70</strong> and <strong>NMSC 0.70–1.40 / 100 PY</strong>. A "NMSC — Phase 3 Part 1+2" block header is present but its data rows were obscured by the overlay and are not legible. <strong>Author's accompanying call (tweet text):</strong> <em>"$ABVX Maint Part 2 preview (the debate settler for the doubters)… expected stock move +20% to +30% (major derisking)."</em></p>
+</details>
+
+<h2 id="sec2">2 — What Abivax actually disclosed</h2>
+<p>ABTECT maintenance (Part 1) re-randomised 580 obefazimod induction responders 1:1:1 to placebo (n=192), obefazimod 25&nbsp;mg (n=193) and 50&nbsp;mg (n=195) for 44 weeks <span class="small">[Deck 1 p.8]</span>. Oncology events <span class="small">[Deck 1 p.13; Deck 2 p.8]</span>:</p>
+<table class="lt">
+<thead><tr><th>Maintenance-emergent event</th><th>Placebo (N=192)</th><th>Obe 25 mg (N=193)</th><th>Obe 50 mg (N=195)</th></tr></thead>
+<tbody>
+<tr><td>Breast cancer</td><td>0</td><td>0</td><td>1 (0.5%)</td></tr>
+<tr><td>Prostate cancer</td><td>0</td><td>0</td><td>1 (0.5%)</td></tr>
+<tr><td>Basal cell carcinoma (NMSC)</td><td>1 (0.5%)</td><td>0</td><td>2 (1.1%)</td></tr>
+<tr><td>Squamous cell carcinoma (NMSC)</td><td>0</td><td>1 (0.5%)</td><td>2 (1.1%)</td></tr>
+<tr><td><strong>Total oncology events</strong></td><td><strong>1</strong></td><td><strong>1</strong></td><td><strong>6</strong></td></tr>
+<tr><td>Colonic dysplasia <span class="small">(pre-malignant, not cancer)</span></td><td>0</td><td>0</td><td>1</td></tr>
+<tr><td class="small">Memo: any / serious TEAE</td><td class="small">50.0% / 4.2%</td><td class="small">58.0% / 2.6%</td><td class="small">71.8% / 5.6%</td></tr>
+</tbody>
+</table>
+<p class="small"><strong>Commentary.</strong> Every non-NMSC malignancy and four of five obefazimod NMSC cases are in the 50&nbsp;mg arm, which also carries the highest overall/serious TEAE burden. <strong>But the 50&nbsp;mg cohort was also the most heavily pre-treated</strong> (prior advanced-therapy failure 46.2% vs 39.4% vs 37.5% <span class="small">[Deck 1 p.9]</span>) and had the most follow-up (82.1% completion vs 34.3% placebo) — both independently raise observed cancer counts. That confound is the spine of this entire analysis: more drug exposure ≠ more carcinogenesis if it also means more screening time in a higher-risk population.</p>
+
+<h2 id="sec3">3 — Independent patient-year recalculation</h2>
+<p>Abivax leaves all patient-year (PY) denominators as <span class="tag">TBD</span> until the end-Q2 readout (Deck 2 slides 17–25 are "example of potential output"). I reconstructed them. <strong>Method:</strong> Deck 1 p.14 discloses headache <em>incidence rates per 100 PY</em> next to subject counts, so maintenance PY backs out exactly — PY = subjects ÷ (rate/100). This is more reliable than assuming a mean exposure, and it is the audited basis for every rate below (<code>sources/py_recalc.py</code>).</p>
+<table>
+<thead><tr><th>Arm</th><th>N</th><th>Headache n [rate/100 PY]</th><th>Implied maint. PY</th><th>Mean exposure</th><th>Completion</th></tr></thead>
+<tbody>
+<tr><td>Placebo</td><td>192</td><td>8 [8.7]</td><td>92.0</td><td>25.0 wk</td><td>34.4%</td></tr>
+<tr><td>Obe 25 mg</td><td>193</td><td>12 [8.9]</td><td>134.8</td><td>36.4 wk</td><td>78.8%</td></tr>
+<tr><td>Obe 50 mg</td><td>195</td><td>16 [11.3]</td><td>141.6</td><td>37.9 wk</td><td>82.1%</td></tr>
+<tr><td><strong>Combined obefazimod</strong></td><td><strong>388</strong></td><td>—</td><td><strong>276.4</strong></td><td>—</td><td>—</td></tr>
+</tbody>
+</table>
+<p class="small">Adding the 8-week induction (obefazimod in both obe arms) gives <strong>total obefazimod exposure</strong> ≈164.4 PY (25 mg), ≈171.5 PY (50 mg), ≈335.9 PY combined — the denominator Abivax will use for "exposure-adjusted by dose." <strong>Note two denominator traps:</strong> (i) the circulating bull sheet uses 163/165 PY for the obe maintenance arms — i.e. it assumes ~100% completion (N × 44 wk) and so understates the true per-PY rate by ~15%; (ii) the placebo arm accrued only ~92 PY because 66% discontinued early and were no longer followed, so "0 in placebo" is weakened by <strong>ascertainment bias</strong> (less on-study time → fewer screen-detected cancers), not necessarily a protective effect.</p>
+
+<h2 id="sec4">4 — Observed rates vs Abivax's own benchmark</h2>
+<p>Maintenance-emergent cancers ÷ maintenance PY (the cleanest like-for-like). Benchmarks are Abivax's derived ranges <span class="small">[Deck 2 p.29–30]</span>: <strong>NMSC 0.7–1.4</strong>; <strong>non-NMSC malignancy 0.3–0.7</strong> per 100 PY. 95% CIs are exact Poisson.</p>
+<table>
+<thead><tr><th>Arm (maint. PY)</th><th>NMSC n</th><th>NMSC /100 PY (95% CI)</th><th>vs 0.7–1.4</th><th>Malig n</th><th>Malig /100 PY (95% CI)</th><th>vs 0.3–0.7</th></tr></thead>
+<tbody>
+<tr><td>Placebo (92.0)</td><td>1</td><td>1.09 (0.03–6.06)</td><td>in range</td><td>0</td><td>0.00 (0–4.01)</td><td>below</td></tr>
+<tr><td>Obe 25 mg (134.8)</td><td>1</td><td>0.74 (0.02–4.13)</td><td>low edge</td><td>0</td><td>0.00 (0–2.74)</td><td>below</td></tr>
+<tr><td>Obe 50 mg (141.6)</td><td>4</td><td><span class="hi-red">2.82 (0.77–7.23)</span></td><td><span class="hi-red">above</span></td><td>2</td><td><span class="hi-red">1.41 (0.17–5.10)</span></td><td><span class="hi-red">above</span></td></tr>
+<tr><td>Combined obe (276.4)</td><td>5</td><td><span class="hi-red">1.81 (0.59–4.22)</span></td><td><span class="hi-red">above</span></td><td>2</td><td>0.72 (0.09–2.61)</td><td>top edge</td></tr>
+</tbody>
+</table>
+<p class="small"><strong>Sensitivity — total obefazimod exposure (induction + maintenance), the "by-dose" denominator:</strong> combined NMSC 1.49 (<span class="hi-red">still &gt; 1.4</span>), combined non-NMSC 0.60 (in range); 50 mg NMSC 2.33, 50 mg non-NMSC 1.17 (both above). Rates only fully collapse "into range" once the multi-year Phase 2/Study-108 OLE patient-years are pooled in (§9).</p>
+<div class="kbox red">
+<p><strong>What the numbers say.</strong> (1) On a clean maintenance-matched basis the <strong>50 mg arm exceeds both of Abivax's own ceilings</strong>, and pooled obefazimod exceeds the NMSC ceiling (1.81 vs 1.4) and sits at the non-NMSC ceiling (0.72 vs 0.7). The "consistent with background" claim is cleanly defensible only for the 25 mg arm and for diluted/pooled denominators. (2) <strong>Decisive caveat:</strong> with 2–4 events every CI is huge and overlaps the benchmark — the data are <strong>underpowered</strong>; neither "elevated" nor "reassuringly in-range" is statistically supportable. The point estimates lean high; the confidence does not exist either way.</p>
+</div>
+
+<h2 id="sec5">5 — Verification of the cited background-rate sources</h2>
+<p><span class="status verified">verified</span> number real &amp; correctly used &nbsp; <span class="status partial">partial</span> real but framing/citation issue &nbsp; <span class="status inconsistent">inconsistent</span> mis-cited / mischaracterised &nbsp; <span class="status unverifiable">unverifiable</span> not locatable.</p>
+<table class="lt">
+<thead><tr><th>Source &amp; Abivax claim</th><th>Status</th><th>Finding</th></tr></thead>
+<tbody>
+<tr><td><strong>Long 2012</strong> — IBD NMSC "912/100,000 PY" (0.91/100 PY) <span class="small">[PMID 22584081]</span></td><td><span class="status verified">verified</span></td><td>Exact: <em>"912/100,000 … vs 623/100,000 in the non-IBD … cohort."</em> But this "background" is already +46% over non-IBD, and the paper attributes the excess to <strong>thiopurines</strong> (OR 1.85); anti-TNF NS. Obe is neither. <span class="small">(Deck mis-titles the paper.)</span></td></tr>
+<tr><td><strong>Bencardino/"Annese" 2025</strong>, <em>Cancers</em> — NMSC "733/100,000" (0.73) <span class="small">[PMID 40427207]</span></td><td><span class="status partial">partial</span></td><td>Number present but it is a <strong>review's secondary citation</strong>, paired with Long's <em>Crohn's-specific</em> IRR 1.64. <strong>Author attribution wrong</strong> (lead author Bencardino, not "Annese V, Bonovas S, Bonovas F").</td></tr>
+<tr><td><strong>Abbas 2014</strong> — UC NMSC "3.7–13.6/1,000 PY" (0.37–1.36/100 PY) <span class="small">[PMID 25244964]</span></td><td><span class="status inconsistent">inconsistent</span></td><td>Range confirmed — but it is a pure <strong>thiopurine dose-response</strong>: 3.7 = <em>never</em>-thiopurine; 13.6 = <em>5th cumulative year</em>. The <strong>1.36 ceiling is an immunosuppressant artefact irrelevant to obe.</strong> Citation page numbers wrong (belong to Long).</td></tr>
+<tr><td><strong>Carli 2020</strong>, <em>Medicina</em> — prostate IBD RR 1.71 (1.16–2.51); UC RR 1.22 <span class="small">[PMID 32545154]</span></td><td><span class="status verified">verified</span></td><td>Both exact — but the <strong>UC RR 1.22 is NOT significant</strong> (CI 0.98–1.51). Authors: risk only <em>"slightly"</em> increased — supports the <em>low</em> end of the benchmark.</td></tr>
+<tr><td><strong>Kaneko 2024</strong>, <em>J Clin Med</em> — "men with IBD ~5× more likely to get prostate cancer" <span class="small">[PMID 38592255]</span></td><td><span class="status inconsistent">inconsistent</span></td><td><span class="hi-red">The "5×" is not in the paper.</span> It is a <strong>68-patient single-centre retrospective</strong> on prognostic factors — no SIR/RR/incidence; the only internal comparison was NS (p=0.07). <strong>Most overstated claim in the deck</strong>, and it contradicts the Carli meta-analysis cited on the same slide.</td></tr>
+<tr><td><strong>Mansoor</strong> abstract — breast cancer "2.3% (UC) vs 1.1%" <span class="small">[IBD 2020;26(S1):S24, P126]</span></td><td><span class="status partial">partial</span></td><td>Figures confirmed, but it is <strong>PREVALENCE, not incidence</strong> (cannot convert to /100 PY), from a <strong>conference abstract</strong>. Mis-cited to <em>Gastroenterology</em> 158.</td></tr>
+<tr><td><strong>Jess</strong> (cited 2005) — overall cancer risk in UC <span class="small">[actual PMID 16618397, Gastro 2006]</span></td><td><span class="status inconsistent">inconsistent</span></td><td>Year/volume mis-cited; named paper is <em>intestinal</em> cancer (UC CRC SIR 1.1, NS). The genuine "overall cancer ≈ background" finding (Jess/Pedersen meta, SIR 1.10 NS) <strong>supports the LOW end</strong> — undercutting the upward skew.</td></tr>
+<tr><td><strong>Beaugerie 2009</strong> (CESAME) / <strong>Lemaitre 2017</strong> (JAMA) <span class="small">[PMID 19837455 / 29114832]</span></td><td><span class="status verified">verified</span></td><td>Confirmed — but both measure <strong>lymphoma per 1,000 PY driven specifically by thiopurines/anti-TNF</strong> (Beaugerie HR 5.28; Lemaitre aHR 2.6/2.4/6.1). Class-specific immunosuppressant risk — not a solid-tumour rate, not obe's mechanism.</td></tr>
+</tbody>
+</table>
+<div class="kbox">
+<p><strong>Verdict on the benchmark.</strong> The quoted numbers are mostly real and mostly transcribed correctly (3 citation errors, 1 fabricated-looking "5×"), but the <em>derived ranges are advocacy, not neutral epidemiology</em>: the high ends rest on <strong>thiopurine/anti-TNF-treated</strong> populations whose excess risk comes from a mechanism obe does not share, while the company's own best population-based citations (Jess; Carli UC RR 1.22 NS) point to background-level risk. A fairer, mechanism-matched window is roughly <strong>NMSC 0.4–0.9</strong> and <strong>non-NMSC 0.3–0.5</strong> / 100 PY — against which the 50 mg point estimates look <em>worse</em>, not better. The honest takeaway is not "the benchmark proves safety" but "the event counts are too small to support any firm rate conclusion."</p>
+</div>
+
+<h2 id="sec6">6 — Three-comparator triangulation</h2>
+<table class="lt">
+<thead><tr><th>Comparator</th><th>Background rate (verified)</th><th>Read vs obefazimod observed</th></tr></thead>
+<tbody>
+<tr><td><strong>(a) Age/sex-matched general population</strong> (SEER / modeled)</td><td>NMSC ~0.69/100 PY (Rogers; NMSC not SEER-reportable). Breast 132.5/100k all-ages → <strong>~0.53/100 PY at 65–74</strong>. Prostate 123.2/100k, median dx age 68. <span class="small">[SEER; PMID 25928283]</span></td><td>Both solid-tumour cases occurred at the <strong>ages of peak background incidence</strong> (breast 65+, prostate 50+). ~0.5/100 PY of breast cancer is expected in a 65+ woman before any drug effect — fully consistent with one screen-detected case.</td></tr>
+<tr><td><strong>(b) Moderate-to-severe UC population</strong></td><td>NMSC ~0.37 (thiopurine-naïve) → 0.91 (IBD overall). Non-NMSC: overall cancer SIR ≈1.1 (NS); prostate UC RR 1.22 (NS). <span class="small">[PMID 25244964, 22584081, 32545154]</span></td><td>25 mg arm sits squarely in UC background. 50 mg point estimates run above it — CI-overlapping and confounded by heavier pre-treatment.</td></tr>
+<tr><td><strong>(c) JAK-inhibitor class</strong> (approved oral UC comparators)</td><td>Tofacitinib ORAL Surveillance: malignancy excl. NMSC <strong>1.13/100 PY</strong> (both doses) vs 0.77 TNF (HR ~1.47, non-inferiority <em>failed</em>); lymphoma 0.07–0.11 vs 0.02; UC-program vs MarketScan background 0.63/100 PY. <strong>Class BOXED warning</strong> for malignancy + NMSC (tofacitinib &amp; upadacitinib). <span class="small">[XELJANZ §5.3/§14.6; RINVOQ §5.3 — dataroom]</span></td><td>Key competitive context: the approved oral comparators carry a <strong>boxed malignancy warning</strong> and a <em>proven</em> ~1.1/100 PY excess. Obe's combined non-NMSC (0.60–0.72/100 PY) is <strong>at or below</strong> the JAK class — with the opposite mechanistic bet. The non-JAK oral (etrasimod/S1P) has <em>no</em> boxed warning. Obe's likely positioning is "JAK-like efficacy without the JAK malignancy box" — <em>if</em> the signal proves to be noise.</td></tr>
+</tbody>
+</table>
+
+<h2 id="sec7">7 — Per-case causality</h2>
+<p>All nine ABTECT-maintenance oncology events, with investigator adjudication and exposure-at-detection <span class="small">[Deck 1 p.22–23; corroborated by the circulating case-level sheet]</span>. "Mo&nbsp;obe" = total obefazimod exposure incl. induction.</p>
+<table class="lt">
+<thead><tr><th>#</th><th>Arm</th><th>Type</th><th>Age</th><th>Mo obe</th><th>Key risk factors</th><th>Investigator call</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>Placebo</td><td>BCC</td><td>73</td><td>1.9 (pbo)</td><td>Pre-existing skin lesion at the carcinoma site</td><td>Not related</td></tr>
+<tr><td>2</td><td>50 mg</td><td>BCC</td><td>72</td><td>6.1</td><td>Prior BCC (since 2021)</td><td>Unlikely</td></tr>
+<tr><td>3</td><td>50 mg</td><td>BCC</td><td>45</td><td>5.5</td><td>None disclosed</td><td>Not related</td></tr>
+<tr><td>4</td><td>25 mg</td><td>SCC</td><td>60</td><td>8.7</td><td>Prior melanoma; azathioprine; deucravacitinib</td><td>Not related</td></tr>
+<tr><td>5</td><td>50 mg</td><td>SCC</td><td>70</td><td>3.5</td><td>Prior SCC; <strong>prior tofacitinib + adalimumab/infliximab/vedolizumab</strong></td><td>Possibly</td></tr>
+<tr><td>6</td><td>50 mg</td><td>SCC</td><td>60</td><td>2.8</td><td>Sun exposure, age, smoking (investigator-noted)</td><td>Possibly</td></tr>
+<tr><td>7</td><td>50 mg</td><td>Prostate</td><td>50+</td><td>8.5</td><td>6+ prior advanced therapies incl. <strong>upadacitinib</strong>; MGUS; Gleason 7</td><td>Unlikely</td></tr>
+<tr><td>8</td><td>50 mg</td><td>Breast</td><td>65</td><td>6.8</td><td><strong>Screen-detected (mammography)</strong>; peak-incidence age; Grade 2 ductal</td><td>Unlikely</td></tr>
+<tr><td>9</td><td>50 mg</td><td>Colon dysplasia <span class="small">(not cancer)</span></td><td>49</td><td>—</td><td>UC since 2022; routine surveillance colonoscopy</td><td>Not related</td></tr>
+</tbody>
+</table>
+<div class="two">
+<div>
+<h3 style="color:var(--green)">Why these are unlikely drug-related</h3>
+<div class="flag-card good"><span class="num">1</span><strong>Latency far too short.</strong> Invasive Grade-2 breast (6.8 mo) and Gleason-7 prostate (8.5 mo) cannot arise <em>de novo</em> in months — subclinical at enrolment, screen-detected.</div>
+<div class="flag-card good"><span class="num">2</span><strong>Established risk factors in nearly every case</strong> — age ≥60 (most), prior skin cancer (cases 2,4,5), and prior <strong>thiopurine / JAK</strong> exposure (cases 4,5,7) — i.e. the very agents that carry NMSC/malignancy warnings.</div>
+<div class="flag-card good"><span class="num">3</span><strong>No coherent histology</strong> — BCC, SCC, ductal breast, prostate adeno; a true carcinogen usually yields a consistent tumour type. Most rated Not/Unlikely.</div>
+<div class="flag-card good"><span class="num">4</span><strong>Differential follow-up</strong> — obe patients stayed on study ~50% longer than placebo (82% vs 34%) → more screening visits → more incidental detection, independent of true incidence.</div>
+</div>
+<div>
+<h3 style="color:var(--red)">Residual reasons for caution</h3>
+<div class="flag-card"><span class="num">1</span><strong>Dose-response.</strong> All non-NMSC malignancies and 4/5 obe NMSC cases in 50 mg; 25 mg had zero non-NMSC. A monotonic gradient is a causal fingerprint <em>(counter: tracks heavier pre-treatment &amp; longer exposure).</em></div>
+<div class="flag-card"><span class="num">2</span><strong>Two SCCs rated "Possibly Related"</strong> — not fully dismissed by investigators.</div>
+<div class="flag-card"><span class="num">3</span><strong>50 mg point estimates exceed even the inflated benchmark</strong> for both categories.</div>
+<div class="flag-card"><span class="num">4</span><strong>Phototoxic metabolite (§8).</strong> The protocol confirms ABX464-N-Glu is phototoxic at clinical exposure — a plausible drug-specific promotion mechanism for the NMSC (skin) cases, which are 5 of 8 events and 50 mg-skewed.</div>
+<div class="flag-card"><span class="num">5</span><strong>Sponsor pre-flagged malignancy as an AESI</strong> on a long-term immune/MoA concern; carcinogenicity bioassays still unconfirmed. Mechanistic implausibility ≠ proven human safety.</div>
+</div>
+</div>
+<p class="small"><strong>On the dysplasia case:</strong> colonic dysplasia is a <strong>pre-malignant UC surveillance finding, not cancer</strong>; UC patients on surveillance have meaningful background dysplasia-detection rates. Counting it as a "cancer" overstates the tally — correctly excluded from the malignancy rates above.</p>
+
+<h2 id="sec8">8 — Mechanism: carcinogenesis pathways (now partly primary-sourced)</h2>
+<p>There are two principal routes by which a drug causes cancer in humans: <strong>(1) genotoxicity</strong> (direct DNA damage / mutation — initiation) and <strong>(2) non-genotoxic promotion</strong>, dominated for immunology drugs by <strong>immunosuppression</strong>. The circulating bull thesis argues obe fails both. A primary source obtained 15 Jun 2026 — the <strong>ABX464-104 Phase 2b maintenance protocol</strong> (V5.1, 11 Jul 2022; clinicaltrials.gov NCT04023396, §1.2.4), saved in <code>sources/</code> — now resolves much of this, <em>and surfaces a third, skin-specific mechanism the bulls omitted.</em></p>
+
+<h3>Pathway 1 — Genotoxicity: <span style="color:var(--green)">genotox CLEARED (now sourced)</span>, carcinogenicity bioassays still unconfirmed</h3>
+<p>The protocol confirms the genotoxicity rows of the bull sheet to a primary source:</p>
+<blockquote><span class="tag">ABX464-104 protocol §1.2.4 — verbatim</span><br>"ABX464 was found to be non-genotoxic. Its main metabolite, the ABX464-N-Glu was not mutagenic as assessed by an <strong>Ames test, an in vitro and an in vivo micronucleus assay</strong>."</blockquote>
+<p><span class="status verified">verified</span> Ames, in-vitro and in-vivo micronucleus all negative; N-Glu non-mutagenic. <strong>But the carcinogenicity <em>bioassays</em> remain unverified:</strong> this protocol lists tox durations only "2-weeks to 6/9 months" and makes <strong>no mention of a 2-year rat carcinogenicity or 6-month TgRasH2 mouse study</strong> — so the bull sheet's "2-yr rat / TgRasH2 CLEARED" rows still lack any traceable source (those long-term bioassays are typically run pre-NDA; status unknown). Net: <strong>initiation via direct mutagenesis is now reasonably excluded; the formal lifetime carcinogenicity readouts are not yet in hand.</strong></p>
+
+<h3>Pathway 2 — Immunosuppression: clinically clean, but one real nonclinical flag</h3>
+<p>Clinical data point away from immunosuppression: serious/severe infections <strong>0.5% (50 mg) vs 1.0% (placebo)</strong>, zero opportunistic infections, no herpes-zoster signal <span class="small">[Deck 1 p.13]</span>; Phase 2b lymphocyte and CD8/NK counts preserved (unlike JAKs). <strong>However, the protocol confirms a genuine preclinical immunosuppression signal</strong> — not just a "bull-sheet caveat":</p>
+<blockquote><span class="tag">ABX464-104 protocol — verbatim</span><br>"<strong>Immunosuppression has been observed during the 9-month cynomolgus monkey study with ABX464-N-Glu</strong> dosed directly by oral gavage."</blockquote>
+<p>It did not translate to a clinical infection signal at therapeutic exposure, but it means "no immunosuppression pathway" is <em>overstated</em> — the metabolite is immunosuppressive at sustained high exposure, which is exactly the long-term concern for malignancy surveillance.</p>
+
+<h3 style="color:var(--red)">Pathway 3 — Phototoxicity: a drug-specific, NMSC-relevant mechanism the bulls ignore</h3>
+<div class="banner"><b>🔴 New material finding.</b> The same protocol discloses: <em>"oral administration of ABX464-N-Glu was <strong>phototoxic</strong> in a nonclinical model at clinically relevant exposure levels"</em> — and subjects are formally counselled on sun protection. Phototoxicity / photosensitisation is a <strong>recognised, non-genotoxic, non-immune promotion mechanism for keratinocyte skin cancers (BCC/SCC)</strong>. This matters because <strong>5 of the 8 cancers were NMSC</strong>, in older/sun-exposed patients, two rated "Possibly Related," and concentrated in the higher-exposure 50 mg arm — a pattern <em>consistent with</em> a phototoxic contribution layered on top of the heavy background risk factors. It does <strong>not</strong> implicate the solid tumours (breast/prostate remain background on latency grounds), but it means the NMSC signal deserves more weight than the "no pathway to cancer" thesis allows.</div>
+
+<h3>The sponsor itself pre-flagged malignancy as an AESI</h3>
+<blockquote><span class="tag">ABX464-104 protocol — verbatim</span><br>"Despite a lack/paucity of reported events in non-clinical and clinical trials, <strong>a potential impact on both innate and adaptive immune responses and the novel mechanism of action, could be a concern with regards to malignancies, mainly in the long-term.</strong> All malignancies including non-melanoma skin cancers will be reported as an AESI."</blockquote>
+<p class="small">So the cancer cases are hitting a <strong>pre-specified Adverse Event of Special Interest</strong> that Abivax designated <em>because</em> of a theoretical long-term immune/MoA concern — which tempers the pure "background noise / nothing to see" framing on both sides of the debate.</p>
+
+<h3>miR-124 mechanistic direction — tumour suppressor, not promoter</h3>
+<p>The strongest <em>reassuring</em> mechanistic point (better than "it's not a kinase"): the specific miRNA obe raises, <strong>miR-124, is a tumour suppressor</strong> consistently silenced in cancers; restoring it is anti-proliferative/pro-apoptotic. Verified targets include <strong>STAT3, CDK6, PIK3CA, SLC16A1/MCT1, IL6R</strong> — i.e. obe pushes the dial in the <em>anti</em>-cancer direction systemically. <span class="small">[PMID 36573890 (MoA); 31819494 (melanoma); 27842510 (breast); 33333886 (CTCL)]</span> This is a systemic argument and does not negate a <em>local</em> skin phototoxicity effect.</p>
+
+<h2 id="sec9">9 — Audit of the circulating "pooled-data" bull sheet</h2>
+<p>A third-party analysis circulating on X pools obefazimod malignancy events across the whole program and concludes "NO boxed warning." It reaches a reasonable base case and has two genuine insights (NMSC is a separate FDA category; the cases carry azathioprine/JAK/prior-cancer confounders). But it is a <strong>synthesis, not a primary source.</strong> Provenance map:</p>
+<table class="lt">
+<thead><tr><th>Block in the sheet</th><th>Traces to</th><th>Status</th></tr></thead>
+<tbody>
+<tr><td>ABTECT maintenance rows + case rows 1–9 + infection/AE rows</td><td>June 1 deck (p.13/22/23)</td><td><span class="status verified">verified</span></td></tr>
+<tr><td>Study 108 line ("no new safety signals")</td><td><strong>6-K, 22 May 2026</strong> — Study 108 three-year interim</td><td><span class="status partial">partial</span> — release real; malignancy count is the author's <em>inference</em></td></tr>
+<tr><td>Phase 2b 96-wk OLE malignancies (meningioma, cervical/colon dysplasia)</td><td>"Abivax disclosures" — not in decks or PubMed</td><td><span class="status unverifiable">unverified</span></td></tr>
+<tr><td>Preclinical <strong>genotoxicity</strong> rows (Ames, micronucleus, N-Glu)</td><td><strong>ABX464-104 protocol §1.2.4</strong> (NCT04023396, 2022)</td><td><span class="status verified">verified</span> — now primary-sourced (§8)</td></tr>
+<tr><td>Preclinical <strong>carcinogenicity bioassays</strong> (2-yr rat, TgRasH2 mouse)</td><td>Nothing locatable</td><td><span class="status unverifiable">unverified</span> (see §8)</td></tr>
+</tbody>
+</table>
+<p>The sheet's pooled rates: <strong>50 mg (588 PY): NMSC 0.85, non-NMSC 0.51, all-cancer-excl-dysplasia 1.36 / 100 PY; 25 mg (523 PY): NMSC 0.38, non-NMSC 0.00.</strong> The arithmetic is internally consistent and, pooled, both doses look "in range." Five flags:</p>
+<div class="flag-card"><span class="num">1</span><strong>Optimistic patient-years.</strong> Maintenance is entered at 163/165 PY (= N × 44 wk, i.e. ~100% completion). True maintenance PY is ~135/142 (§3), so maintenance-window rates are understated ~15%. <em>(The pooled numbers barely move — the OLE's ~325 PY dominates — so the "in range" pooled conclusion is robust; it's the maintenance-specific 50 mg signal that gets smoothed away.)</em></div>
+<div class="flag-card"><span class="num">2</span><strong>Dose-attribution flatters 25 mg.</strong> The 6-K is explicit: Study 108's 130 patients took <strong>50 mg for 2–4 years first</strong>, then de-escalated to 25 mg. Assigning their ~360 PY entirely to the "Pooled 25 mg" bucket (→ pristine 0.38/100 PY) buries years of prior 50 mg exposure where any latent risk would have accrued.</div>
+<div class="flag-card"><span class="num">3</span><strong>Internal inconsistency.</strong> The study-level table shows ABTECT-1 induction NMSC = 1 with no matching case row, while the induction prostate case (row 10) is not reflected in the induction non-NMSC count.</div>
+<div class="flag-card"><span class="num">4</span><strong>N overstates unique patients.</strong> "Pooled 50 mg N = 1048" double-counts the same people flowing induction → maintenance → OLE. Person-time pooling is defensible for an exposure-adjusted rate; the headline patient count is not.</div>
+<div class="flag-card"><span class="num">5</span><strong>One factual error on labels.</strong> The thesis claims "no malignancy boxed warnings outside the JAK class." <span class="hi-red">Anti-TNFs (infliximab, adalimumab) — both approved for UC — carry a boxed warning that explicitly includes malignancy/lymphoma.</span> So malignancy boxed warnings exist in <em>two</em> UC classes (JAK and anti-TNF). It doesn't change the "no box for obe" conclusion — obe resembles neither — but it is a verifiable misstatement.</div>
+<blockquote><span class="tag">Study 108 — verbatim, 6-K 22 May 2026</span><br>"Following two to four years of open-label treatment with 50 mg, 130 patients de-escalated to 25 mg, and at week 144, 68% (88/130) were in clinical remission and 80% (104/130) completed 144 weeks… Patients in Study 108 were treated with obefazimod for <strong>up to seven years, with no new safety signals observed.</strong>"</blockquote>
+<p class="small"><strong>Net on the bull sheet:</strong> directionally correct and useful, but it is the mirror image of the company deck — same over-confidence, same glossing of the 50 mg concentration and the small-n / unpublished-preclinical gaps — plus an unsourced linchpin table and one label error. "No boxed warning" is the <em>likely</em>, not <em>certain</em>, outcome.</p>
+
+<h2 id="leastconfident">★ What I'm least confident about</h2>
+<p class="small">Ranked by how much it would move the read off the Readout Scorecard. These are the load-bearing assumptions where I could be wrong — read the scorecard's verdict <em>through</em> this list, not around it.</p>
+
+<div class="flag-card"><span class="num">1</span><strong>Which background band is the right yardstick.</strong> The whole scorecard verdict is anchored on the IBD band <strong>(malig 0.30–0.70 / NMSC 0.70–1.40)</strong> — but §5 found that band is built from <em>thiopurine/anti-TNF-treated</em> cohorts and skews high. On a mechanism-matched band (~<strong>0.3–0.5 / 0.4–0.9</strong>) the <em>same</em> reported rate reads one notch worse. <span class="hi-red">If ABVX reports a rate that lands "in band" against 0.30–0.70, check whether it would still be "in band" against the tighter mechanism-matched window before calling it derisked.</span> <em>Resolves with:</em> ABVX disclosing the comparator population behind their benchmark.</div>
+
+<div class="flag-card"><span class="num">2</span><strong>Our recalc denominators.</strong> The "Our recalc" column is built by backing patient-years out of the Deck 1 p.14 headache rate (§3) — an indirect reconstruction, not a disclosed PY. If ABVX's actual maintenance PY differ materially from our 92/135/142, the entire "Our recalc" column shifts, and with it the 50&nbsp;mg above-band call. <em>Resolves with:</em> the actual per-dose PY in next week's print — replace our column the moment it lands.</div>
+
+<div class="flag-card"><span class="num">3</span><strong>How ABVX will frame the denominator.</strong> The scorecard handles both, but I genuinely don't know whether they'll headline a clean maintenance-window rate (where the 50&nbsp;mg signal shows) or a pooled/OLE denominator (where it smooths to in-range). The bull model bets on the latter. <em>Resolves with:</em> reading which PY sits under their headline rate — this is the single biggest swing and why it's the "grab first" item.</div>
+
+<div class="flag-card"><span class="num">4</span><strong>The bull model's cropped elements.</strong> The numbers I transcribed are read cleanly and arithmetic-checked, but: the first malignancy block's <em>title</em> ("Phase 3 Part 1") is inferred from its denominators, not read; the "NMSC Part 1+2" data rows were obscured by an overlay and are missing; and the overlay box's <strong>450 / 190 / 0.60</strong> have no legible labels. I'm confident in the rates, less so in what cut/cohort a couple of them represent. <em>Resolves with:</em> the original sheet from @seedy19tron, if you want it nailed down.</div>
+
+<div class="flag-card"><span class="num">5</span><strong>Small-n is unfixable even next week.</strong> With 2–4 events per cell the 95% CIs span the whole band (§4). Whatever rate ABVX prints, a point estimate likely <em>won't</em> be statistically decisive either way — I'm least confident that any single readout "settles" this, contra the tweet's "debate settler" framing. <em>Resolves with:</em> only larger pooled exposure over time, or a clear monotonic dose-trend that survives the CIs.</div>
+
+<div class="flag-card"><span class="num">6</span><strong>Whether phototoxicity actually drives the NMSC cluster.</strong> The phototoxic metabolite (§8) is a real, drug-specific mechanism and the NMSC cases are 50&nbsp;mg-skewed — but I can't separate a true phototoxic contribution from the heavy background sun-exposure/age/prior-skin-cancer confounders. <em>Resolves with:</em> body-site/latitude data on the NMSC cases, or a photosensitivity precaution on the eventual label.</div>
+
+<div class="flag-card"><span class="num">7</span><strong>The unread long-term safety data.</strong> The 2-year carcinogenicity bioassays remain unsourced and Study 108's malignancy tally is asserted ("no new signals"), not quantified (§9–10). I'm assuming these don't hide a signal — that's an assumption, not a finding. <em>Resolves with:</em> the NDA nonclinical summary and a quantified OLE malignancy/100 PY line-listing.</div>
+
+<h2 id="sec10">10 — Confidence, gaps &amp; follow-up</h2>
+<div class="kbox green">
+<p><strong>Confident:</strong> the case disclosures are faithful; the biology (miR-124 tumour suppressor; non-immunosuppressant; not a kinase) makes drug-caused carcinogenesis implausible; short latencies make the two solid tumours almost certainly pre-existing; the verifiable Pathway-2 immunosuppression data point the right way; the JAK comparator genuinely carries a boxed malignancy warning obe is unlikely to inherit.</p>
+<p><strong>Over-claimed (by both company and bulls):</strong> the "within background" benchmark is built from immunosuppressant-treated cohorts and two weak/cherry-picked sources; on a clean maintenance-matched denominator the 50 mg (and pooled) rates exceed it; the dose-concentration is real and glossed.</p>
+<p><strong>Newly resolved (15 Jun):</strong> genotoxicity is now primary-sourced — Ames + micronucleus negative (ABX464-104 protocol). But the same document reveals a <strong>phototoxic metabolite</strong> (NMSC-relevant), a real <strong>9-month cynomolgus immunosuppression</strong> signal, and the sponsor's own <strong>malignancy AESI</strong> — so the "no MoA for cancer" claim is over-broad; a local skin-promotion route is plausible.</p>
+<p><strong>Genuinely unresolved:</strong> (i) 2–4 events → CIs spanning the whole benchmark (underpowered); (ii) the <strong>2-year carcinogenicity bioassays are still unconfirmed</strong>; (iii) the long-term OLE/Study-108 malignancy tally is asserted ("no new signals"), not quantified; (iv) whether the NMSC clustering reflects phototoxicity vs background risk factors.</p>
+</div>
+<h3>Follow-up to close the question</h3>
+<ul>
+<li><strong>End-Q2 Part 2 + Phase 2 readout:</strong> obtain the <em>actual</em> per-dose patient-years and exposure-adjusted incidence with CIs; check whether "in range" relies on pooling the large OLE denominator and on the 25 mg dose-attribution.</li>
+<li><strong>Carcinogenicity bioassays (highest remaining value):</strong> genotoxicity is now sourced (ABX464-104 protocol: Ames/micronucleus negative). Still needed are the <strong>2-year rat carcinogenicity and TgRasH2 mouse</strong> readouts — from the NDA nonclinical summary / current IB — to fully close Pathway 1.</li>
+<li><strong>Phototoxicity follow-through:</strong> given the protocol's phototoxic-metabolite finding and the NMSC clustering, watch whether the NMSC cases track sun-exposed body sites / latitude, and whether the label will carry a photosensitivity / skin-exam precaution.</li>
+<li><strong>Study 108 / Phase 2b OLE malignancy line-listing:</strong> request the quantified long-term malignancy/100 PY by dose (the 6-K gives only "no new safety signals").</li>
+<li><strong>Investigator adjudication detail</strong> for the two "Possibly Related" SCCs.</li>
+<li><strong>Correct the citations</strong> before relying on the deck externally: Abbas pages, Jess year/volume, Mansoor journal, Bencardino authorship, and the unsupported Kaneko "5×."</li>
+</ul>
+
+<div class="footer">Prepared by Triple Gate Capital, LP | Sources: Abivax ABTECT Maintenance Topline deck (1 Jun 2026), Part 2 Primer (15 Jun 2026), 20-F FY2025 (23 Mar 2026), 6-K Q1-2026 / Study 108 interim (22 May 2026), ABX464-104 Phase 2b protocol (NCT04023396, V5.1 11 Jul 2022, §1.2.4 preclinical); FDA labels XELJANZ / RINVOQ / VELSIPITY; PubMed (PMIDs 22584081, 40427207, 25244964, 32545154, 38592255, 19837455, 29114832, 16618397, 36573890, 31819494, 27842510, 33333886); SEER Cancer Stat Facts; a third-party "pooled" analysis circulating on X (provenance audited, §9); @seedy19tron ABVX malignancy projection model emailed 19 Jun 2026 (screenshot archived <code>sources/seedy19tron_ABVX_malignancy_model_2026-06-19.png</code>, transcribed &amp; benchmarked in the Readout Scorecard). Patient-years recomputed independently (<code>sources/py_recalc.py</code>). Cross-study comparisons are not head-to-head.</div>
+
+</body>
+</html>
