@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SLS / REGAL — Most-Likely Read</title>
+<style>
+:root {
+  --navy: #1B2A4A;
+  --steel-blue: #4A6FA5;
+  --gold: #C5A55A;
+  --green: #27AE60;
+  --red: #C0392B;
+  --light-gray: #F8F9FA;
+  --mid-gray: #E9ECEF;
+  --dark-gray: #6C757D;
+  --near-black: #343A40;
+}
+@page { size: A4; margin: 20mm 15mm 20mm 15mm; }
+* { box-sizing: border-box; }
+body {
+  font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Arial, sans-serif;
+  font-size: 12px; line-height: 1.6; color: var(--near-black);
+  max-width: 100%; margin: 0 auto; padding: 20px 40px;
+}
+h1 { font-size: 24px; font-weight: bold; color: var(--navy);
+     border-bottom: 3px solid var(--navy); padding-bottom: 8px; margin-top: 0; margin-bottom: 6px; }
+h2 { font-size: 18px; font-weight: bold; color: var(--navy);
+     border-bottom: 1px solid var(--mid-gray); padding-bottom: 4px; margin-top: 26px; margin-bottom: 12px; }
+h3 { font-size: 14px; font-weight: bold; color: var(--steel-blue); margin-top: 16px; margin-bottom: 8px; }
+p { margin-bottom: 8px; }
+a { color: var(--steel-blue); text-decoration: none; }
+strong { font-weight: 600; }
+em { font-style: italic; color: var(--dark-gray); }
+ul, ol { margin: 6px 0 10px 0; padding-left: 22px; }
+li { margin-bottom: 4px; }
+blockquote { border-left: 4px solid var(--steel-blue); background: var(--light-gray);
+  padding: 12px 16px; margin: 12px 0; font-size: 11px; }
+table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 11px; font-variant-numeric: tabular-nums; }
+thead { background: var(--navy); color: white; }
+th { padding: 8px 10px; text-align: left; font-weight: 600; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+td { padding: 6px 10px; border-bottom: 1px solid var(--mid-gray); vertical-align: top; }
+td:not(:first-child), th:not(:first-child) { text-align: left; }
+table.num td:not(:first-child), table.num th:not(:first-child) { text-align: right; }
+tr:nth-child(even) { background: var(--light-gray); }
+.meta { background: var(--light-gray); border: 1px solid var(--mid-gray); border-radius: 6px;
+  padding: 12px 16px; margin: 12px 0 4px 0; font-size: 11px; }
+.meta strong { color: var(--navy); }
+.method { background: #fbfcfe; border: 1px solid var(--steel-blue); border-radius: 6px;
+  padding: 12px 16px; margin: 10px 0; font-size: 11px; }
+.method strong { color: var(--navy); }
+.status { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; }
+.status.verified { background: rgba(39,174,96,.15); color: var(--green); border: 1px solid rgba(39,174,96,.3); }
+.status.partial { background: rgba(197,165,90,.18); color: #8a6f30; border: 1px solid rgba(197,165,90,.4); }
+.status.inconsistent { background: rgba(192,57,43,.13); color: var(--red); border: 1px solid rgba(192,57,43,.3); }
+.flag-card { border-left: 4px solid var(--red); background: var(--light-gray); padding: 10px 14px; margin: 10px 0; }
+.flag-card .num { display: inline-block; background: var(--red); color: white; width: 22px; height: 22px; border-radius: 50%;
+  text-align: center; line-height: 22px; font-size: 11px; font-weight: 600; margin-right: 8px; }
+.bull-card { border-left: 4px solid var(--green); background: var(--light-gray); padding: 10px 14px; margin: 10px 0; }
+.bull-card .num { display: inline-block; background: var(--green); color: white; width: 22px; height: 22px; border-radius: 50%;
+  text-align: center; line-height: 22px; font-size: 11px; font-weight: 600; margin-right: 8px; }
+.node-card { border: 1px solid var(--mid-gray); border-left: 5px solid var(--steel-blue); border-radius: 6px;
+  background: #fff; padding: 12px 16px; margin: 12px 0; }
+.node-card .verdict { font-weight: 700; color: var(--navy); }
+.quote-card { background: var(--light-gray); border-left: 3px solid var(--steel-blue); padding: 8px 12px; margin: 6px 0; font-size: 11px; }
+.quote-card .pg { font-size: 9px; color: var(--dark-gray); text-transform: uppercase; letter-spacing: 0.4px; font-weight: 600; display: block; margin-bottom: 2px; }
+.quote-card .qtext::before { content: '"'; color: var(--steel-blue); font-weight: 600; }
+.quote-card .qtext::after { content: '"'; color: var(--steel-blue); font-weight: 600; }
+.bluf { border: 2px solid var(--navy); border-radius: 8px; padding: 16px 20px; margin: 16px 0; background: #fbfcfe; }
+.bigprob { font-size: 30px; font-weight: 700; color: var(--navy); }
+.outcomes { display:flex; gap:10px; margin: 12px 0; flex-wrap: wrap; }
+.outcome { flex:1; min-width: 150px; border-radius: 6px; padding: 10px 12px; border: 1px solid var(--mid-gray); }
+.outcome .pct { font-size: 22px; font-weight: 700; display:block; }
+.outcome.win { border-top: 4px solid var(--green); }
+.outcome.miss { border-top: 4px solid var(--gold); }
+.outcome.flat { border-top: 4px solid var(--red); }
+.led-neg { color: var(--red); font-weight: 700; }
+.led-pos { color: var(--green); font-weight: 700; }
+.led-neu { color: var(--dark-gray); font-weight: 700; }
+.footer { text-align: center; font-size: 9px; color: var(--dark-gray); font-style: italic; margin-top: 24px; padding-top: 8px; border-top: 1px solid var(--mid-gray); }
+.small { font-size: 9px; color: var(--dark-gray); font-style: italic; }
+.toc-wrap { margin: 14px 0 8px 0; }
+.toc-head { font-size: 10px; text-transform: uppercase; letter-spacing: .5px; color: var(--dark-gray); font-weight: 600; margin-bottom: 6px; }
+.toc { font-size: 11.5px; background: var(--light-gray); border: 1px solid var(--mid-gray); border-radius: 6px; padding: 12px 18px; max-width: 620px; }
+.toc-top { display: block; margin-bottom: 9px; padding-bottom: 8px; border-bottom: 1px solid var(--mid-gray); font-weight: 600; color: var(--navy); }
+.toc-top:hover { text-decoration: underline; }
+.toc-cols { display: flex; gap: 34px; }
+.toc-col { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+.toc-col a { display: block; line-height: 1.35; color: var(--steel-blue); }
+.toc-col a:hover { color: var(--navy); text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<h1>SELLAS / REGAL — The Most-Likely Read</h1>
+<p class="small">Galinpepimut-S (GPS) maintenance in second-complete-remission (CR2) AML · Pivotal Phase 3 REGAL (NCT04229979) · What is the single most likely outcome at the 80-event final overall-survival analysis?</p>
+
+<div class="toc-wrap">
+<div class="toc-head">Contents</div>
+<div class="toc">
+<a class="toc-top" href="#blf">Bottom Line Up Front — the single most likely outcome</a>
+<div class="toc-cols">
+<div class="toc-col">
+<a href="#sec1">1 · The outcome tree</a>
+<a href="#sec2">2 · The disclosure trail</a>
+<a href="#sec3">3 · Why HR 0.636 is the threshold</a>
+<a href="#sec4">4 · What the slow events tell us</a>
+<a href="#sec5">5 · The QUAZAR bar</a>
+</div>
+<div class="toc-col">
+<a href="#sec6">6 · The class pillar (WT1 graveyard)</a>
+<a href="#sec7">7 · The bull's best card</a>
+<a href="#sec8">8 · Probability synthesis</a>
+<a href="#sec9">9 · The one input that would change this</a>
+<a href="#sec10">10 · What I'm least confident about</a>
+</div>
+</div>
+</div>
+</div>
+
+<div class="bluf" id="blf">
+<h3 style="margin-top:0;color:var(--navy);">Bottom Line Up Front — the single most likely outcome</h3>
+<p><strong>REGAL most likely <span style="color:var(--red);">misses statistical significance</span> (~72%).</strong> The single most probable <em>texture</em> of that result is a <strong>directionally favourable OS curve — GPS true HR below 1.0, patients living modestly longer — that falls short of the HR≈0.64 significance threshold at 80 events.</strong> A clean significant win is the minority case at <span class="bigprob" style="font-size:20px;">~28%</span> (plausible range 18–38%).</p>
+<div class="outcomes">
+  <div class="outcome win"><span class="pct" style="color:var(--green);">~28%</span><strong>Statistically significant OS win</strong><br><span class="small">GPS clears observed HR ≈0.64 at 80 events. The bull case.</span></div>
+  <div class="outcome miss"><span class="pct" style="color:#8a6f30;">~35%</span><strong>Directional benefit, misses significance</strong><br><span class="small">The modal single outcome — drug helps, +2–4 mo mOS, but not <em>enough</em> against the threshold.</span></div>
+  <div class="outcome flat"><span class="pct" style="color:var(--red);">~37%</span><strong>Flat / no benefit</strong><br><span class="small">Curves converge or cross; class graveyard outcome.</span></div>
+</div>
+<p class="small" style="margin-bottom:8px;">Outcome weights are analytical judgment derived from a prior-over-true-HR × power-at-80-events construction (§8); the two failure flavours are close enough that they are best read together as a single ~72% "no significant win." A four-perspective blind board on the prior draft spanned <strong>22% (bear/clinician) → 28% (bear/biostat) → 35% (bull)</strong>; ~28% for the win sits at the board's center of mass.</p>
+<p style="margin-top:10px;padding-top:10px;border-top:1px solid var(--mid-gray);margin-bottom:0;"><strong>The single most likely outcome is that REGAL reports a directionally favourable overall-survival curve that misses statistical significance.</strong> The bet was never “does GPS help?” — node by node, we think it probably does (true HR &lt; 1.0 is the more likely node at ~60–65%, with the long pooled survival and a thrice-passed IDMC under a live efficacy boundary as real support) — it is “does GPS help <em>enough</em>.” And the significance threshold at 80 events is an observed HR ≈ 0.64, at which the company’s own 0.636 design effect sits right <em>on</em> the boundary rather than comfortably inside it — a bar steeper than the only approved AML-maintenance drug ever delivered, in a class with zero randomized WT1-vaccine wins on a hard endpoint and a real self-antigen tolerance liability. So the most likely single ending is a helpful-looking curve that does not reach significance: we put a clean significant win at <strong>~28% (range 18–38%)</strong>, a directional miss at ~35%, and a flat/negative result at ~37% — the two failure modes together a ~72% “no significant win.” The one input that could flip this is the IDMC’s hidden posterior, which can only cut in GPS’s favour — which is exactly why this stays a live, watched name rather than a settled short, and the main axis on which a reasonable bull reaches the mid-30s.</p>
+</div>
+
+<h2 id="sec1">1. The outcome tree — and where it most likely lands</h2>
+<p>REGAL is a <strong>survival-driven</strong> Phase 3: it reads out at the <strong>80th death</strong>, not on a calendar date. Three endings are possible, and the method's job is to commit to the most probable one rather than hedge across them. Reading the evidence node by node, the trial most likely passes through a <em>directional</em> benefit but stops short of the <em>significant</em> one.</p>
+
+<div class="node-card">
+<p style="margin:0 0 4px 0;"><strong>Node A — Does GPS produce a <em>directional</em> OS benefit (true HR &lt; 1.0)?</strong></p>
+<p style="margin:0;"><span class="verdict led-pos">More probable: YES (~60–65%).</span> The blinded pooled population is living far longer than the 8-month design assumption (§4); the IDMC passed the trial unmodified three-plus times under a live efficacy boundary (§4); GPS is the most sophisticated WT1 construct ever tested and is genuinely immunogenic with documented epitope spreading (§7). On balance the drug probably does something. <em>What would flip this node: the WT1/AML class is 0-for-everything on controlled endpoints and central tolerance is a real, construct-agnostic liability (§6) — a flat true HR ≈1.0 remains a live ~35–40% branch.</em></p>
+</div>
+<div class="node-card">
+<p style="margin:0 0 4px 0;"><strong>Node B — Is that benefit large enough to clear the observed-HR≈0.64 threshold at 80 events?</strong></p>
+<p style="margin:0;"><span class="verdict led-neg">More probable: NO (~28% clears it).</span> an observed HR ≈0.64 is the <em>significance threshold</em>, and the company's 0.636 design effect sits on it rather than inside it (§3) — so GPS must <em>beat</em> its own design (true HR &lt;~0.60) to be a likely winner, and that bar is steeper than QUAZAR/Onureg's <em>observed</em> 0.69 ever delivered (§5). The control arm can carry venetoclax, which erodes the HR (§4a). <em>What would flip this node: a hidden interim separation the IDMC can see and we cannot, or a genuinely weak (~8-mo) BAT arm (§9).</em></p>
+</div>
+<p><strong>Composed, the tree lands on "directional-but-not-significant" as the modal single outcome.</strong> Node A says GPS probably helps; Node B says it probably doesn't help <em>enough</em>. The ~35-point gap between "GPS is directionally better" (~60–65%) and "GPS is significantly better" (~28%) is the entire investment problem — a vaccine that adds 2–4 months of median OS in a 126-patient, 80-event trial is simultaneously <em>clinically plausible</em> and <em>statistically insufficient</em>.</p>
+
+<h2 id="sec2">2. The disclosure trail (the spine of the read)</h2>
+<table class="num">
+<thead><tr><th>Date</th><th>Disclosure</th><th>Events</th><th>Read</th></tr></thead>
+<tbody>
+<tr><td>2022-11-14</td><td>SAP amendment (re-powering)</td><td>—</td><td>Blinded pooled OS ~2× longer than designed → final moved 105→80 events; HR bar set at 0.636</td></tr>
+<tr><td>2025-01-23</td><td>60-event interim: IDMC "continue unmodified"</td><td>60</td><td>Passed futility/safety; did <em>not</em> cross efficacy boundary</td></tr>
+<tr><td>2025-08-07</td><td>IDMC periodic review: continue</td><td>&lt;80</td><td>"Year-end 2025" readout guidance (later missed)</td></tr>
+<tr><td>2025-12-29</td><td>Off-cycle update</td><td>72</td><td>Unusual mid-cycle disclosure; 8 events short</td></tr>
+<tr><td>2026-05-12</td><td>Q1-26 results (78 events as of 5/11)</td><td>78</td><td>2 events short; "patients living longer than expected"</td></tr>
+<tr><td>2026-06-23</td><td><strong>This report</strong></td><td>78 (last disclosed)</td><td>Still blinded; readout imminent but not triggered</td></tr>
+</tbody>
+</table>
+<p>Sources: SELLAS PRs 11/14/22, 1/23/25, 8/7/25, 12/29/25, 5/12/26 (all in dataroom <code>press_releases/</code>).</p>
+
+<h2 id="sec3">3. Why HR 0.636 is the threshold, not the assumption</h2>
+<p><strong>The single most important — and least appreciated — statistical fact:</strong> the <strong>significance threshold (critical observed HR)</strong> at 80 events is ≈ 0.645, not a comfortable powering assumption. At 80 events the standard error of ln(HR) is ≈ 2/√80 ≈ 0.224, so the two-sided-0.05 boundary sits at an <em>observed</em> HR of exp(−1.96 × 0.224) ≈ 0.645. <strong>By a coincidence of this design, that boundary almost exactly equals the company's <em>target</em> HR</strong> — 0.636, the design medians 12.6 vs 8.0 mo (ratio ≈ 0.63). The two are different objects — one is the critical value the observed estimate must beat, the other is the effect the trial was built to detect — but here they nearly coincide, which is precisely the problem: GPS's <em>design</em> effect sits right <em>on</em> the significance boundary rather than safely inside it. We use ≈ 0.64 as the operative threshold throughout. The consequences are stark:</p>
+<ul>
+<li><strong>If GPS's <em>true</em> HR equals the designed ~0.63, the trial wins only ~50–55% of the time</strong> — because that true effect sits on the ≈0.645 boundary, the observed estimate lands above or below the threshold roughly equally. At its own design point, the trial is close to a coin flip.</li>
+<li>To be a <em>likely</em> winner, GPS needs a true HR <em>below</em> ~0.60 — it must <strong>outperform its own design assumption</strong>, not merely meet it.</li>
+<li>The Nov-2022 amendment that cut the final analysis from <strong>105 → 80 events traded statistical power for feasibility</strong>: fewer events = less information = lower power for any given true HR.</li>
+</ul>
+<p>O'Brien-Fleming spends almost no alpha at the early interim, so the final look retains ~full alpha — correct, but that is the <em>neutral baseline</em>, not a tailwind. <em>(Power figures use the Schoenfeld approximation; the exact protocol power/spending function was not recovered from a primary SAP document — flagged in §10.)</em> The question therefore collapses to: <strong>what is the probability that GPS's true OS HR sits below ~0.64 — and how far below?</strong></p>
+
+<h3>3a. Power sensitivity — the trial's fate depends as much on the control arm as on GPS</h3>
+<p>Hold GPS at a genuinely strong <strong>16-month median OS</strong> (≈ the Brayer CR2 pilot's real 16.3-mo figure — "what if GPS replicates its own pilot") and vary the control median. Under an exponential approximation (HR = control median ÷ 16) at 80 events, two-sided α=0.05 (Schoenfeld): <strong>Power = Φ(|ln HR|·√80/2 − 1.96)</strong>.</p>
+<table class="num">
+<thead><tr><th>Control mOS</th><th>Gain (GPS−ctrl)</th><th>Implied HR</th><th>Power @ 80 events</th><th>Zone</th></tr></thead>
+<tbody>
+<tr><td>8.0 mo <em>(design assumption)</em></td><td>+8.0</td><td>0.50</td><td><strong>87%</strong></td><td>Well-powered</td></tr>
+<tr><td>9.0</td><td>+7.0</td><td>0.56</td><td>73%</td><td>Likely win</td></tr>
+<tr><td>9.5</td><td>+6.5</td><td>0.59</td><td>64%</td><td>Lean win</td></tr>
+<tr><td>10.0</td><td>+6.0</td><td>0.63</td><td>56%</td><td>Coin flip</td></tr>
+<tr><td>10.5</td><td>+5.5</td><td>0.66</td><td>47%</td><td>Coin flip</td></tr>
+<tr><td>11.0</td><td>+5.0</td><td>0.69</td><td>39%</td><td>Lean loss</td></tr>
+<tr><td>12.0 <em>(venetoclax-era plausible)</em></td><td>+4.0</td><td>0.75</td><td>25%</td><td>Likely loss</td></tr>
+<tr><td>13.0</td><td>+3.0</td><td>0.81</td><td>15%</td><td>Probable fail</td></tr>
+<tr><td>14.0</td><td>+2.0</td><td>0.88</td><td>9%</td><td>Probable fail</td></tr>
+</tbody>
+</table>
+<p><strong>The lesson:</strong> with a strong 16-month GPS, the probability of statistical success swings from <strong>87% → 9%</strong> purely on where the control lands. Power crosses 50% at a control of ≈10.3 mo (HR ≈0.64, the §3 threshold). In the plausible venetoclax-era zone (control 11–13 mo) power is just 15–39% <em>even though GPS is truly extending life by 3–5 months</em> — the drug works, patients live materially longer, and the trial still reads out negative. <strong>Success requires not only that GPS works, but that the control arm stays weak</strong> — and the protocol permits venetoclax within BAT. <span class="small">Exponential-survival assumption; the OBF final boundary is marginally stricter than 1.96 (shaves ~1–3 pts/cell); non-proportional hazards (a waning maintenance effect) would lower power further.</span></p>
+
+<h2 id="sec4">4. What the slow events actually tell us (the heart of Node A)</h2>
+<p>Management's narrative — "every passing month may increase the probability of success" (Stergiou, 12/29/25) — is <strong>rhetorical, not statistical</strong>: in an event-driven trial, calendar time does not create power; the study reads out at the 80th event regardless. The honest interpretation of slow accrual is that the <em>pooled</em> (blinded, both-arms) population is living far longer than the 8-month design assumption. The trial enrolled 126 patients by April 2024 and logged only 78 deaths by May 2026 — roughly <strong>25 months to reach 62% mortality in a population whose assumed CR2 median was 8 months.</strong> There are five ways to produce that, and they do not all point the same way — crucially, <strong>only one is bullish, and none is distinguishable from the others while blinded:</strong></p>
+<table>
+<thead><tr><th>#</th><th>Explanation for slow events</th><th>What it looks like at unblinding</th><th>Direction</th></tr></thead>
+<tbody>
+<tr><td>1</td><td><strong>Drug effect</strong> — GPS defers deaths in the active arm; deaths concentrate in BAT</td><td>Clear arm separation; observed HR &lt; 0.64 → win</td><td class="led-pos">Bull (the only bullish branch)</td></tr>
+<tr><td>2</td><td><strong>Venetoclax-era control arm</strong> — BAT (which explicitly may include venetoclax) outlives the 8-mo assumption</td><td>Both arms long; curves converge; observed HR → 1 → directional miss</td><td class="led-neg">Bear</td></tr>
+<tr><td>3</td><td><strong>Fitter-than-historical population</strong> — enrolled CR2 patients healthier than the cohorts that anchored "8 months"</td><td>Both arms long; HR compressed</td><td class="led-neg">Bear</td></tr>
+<tr><td>4</td><td><strong>Late-enrollment / follow-up tail</strong> — ~20 Greater-China (3DMed) patients added after the 2022 cap increase have shorter follow-up; mechanically fewer events</td><td>Event <em>timing</em> stretched with no survival meaning; artifact</td><td class="led-neu">Mechanical / neutral</td></tr>
+<tr><td>5</td><td><strong>Censoring / dropout</strong> — lost-to-follow-up patients stop contributing events</td><td>Slower event count, no biology</td><td class="led-neu">Mechanical / neutral</td></tr>
+</tbody>
+</table>
+<p><strong>Most-likely read of this node:</strong> the bullish branch (1) is real and, on the magnitude of the overshoot, <em>not</em> weak — ~25 months to 62% mortality, against an 8-month design assumption and even against QUAZAR's <em>CR1</em> placebo (14.8 mo, a better-prognosis setting), is a large overshoot for a blended population to produce from control-arm improvement alone. That is genuine support for one arm separating, and it is the main reason Node A lands on "GPS probably helps." But branches 2–4 (venetoclax-era BAT, fitter population, the mechanical Greater-China late-enrollment tail) can <em>jointly</em> reproduce the same observation with no drug effect — so this signal lifts the directional node without getting GPS over the significance threshold. We do not over-weight branch 1 by default: the class prior (§6) constrains it, and the number of sub-mechanisms drawn is a partitioning artifact, not evidence.</p>
+<p><strong>The "≥13.5 vs 6 months" figure is not an unblinded split.</strong> The Jan-2025 interim PR's "median survival of over 13.5 months… vs. historical median survival of 6 months" compares the <em>blinded pooled</em> trial population against an <em>external historical Phase 2 reference</em> — it is the pooled-survival observation, not a disclosed GPS-vs-BAT separation. No arm-level efficacy split has ever been disclosed.</p>
+<p>SELLAS itself conceded the ambiguity is <em>unresolvable while blinded</em>:</p>
+<div class="quote-card"><span class="pg">SAP amendment PR · Nov 14 2022</span><span class="qtext">The causative reason for this result remains unknown and could be attributed to many factors, including the potential for…increased clinical benefit accorded by the active GPS arm as well as an evolving treatment landscape and potentially better care for the patients receiving BAT…it is currently impossible to confirm or refute any of the possibilities.</span></div>
+
+<h3>4a. The 60-event futility pass cuts the right way — but only a little</h3>
+<p>Passing the 60-event interim and three-plus IDMC reviews under a live efficacy boundary <strong>makes the worst scenarios (true HR materially &gt;1) less likely</strong> and is consistent with <em>some</em> separation. But a futility pass is <em>weak</em> evidence: it is fully consistent with a true HR ≈0.7–0.95 — exactly the "directional but sub-threshold" zone that loses at 80 events. So it supports Node A (GPS probably helps) far more than it supports Node B (helps enough). It is the single best objective bull signal, and it is why this read is "misses significance," not "fails outright."</p>
+
+<h2 id="sec5">5. The QUAZAR bar — the closest precedent is humbling</h2>
+<table class="num">
+<thead><tr><th>Metric</th><th>QUAZAR / Onureg (approved)</th><th>REGAL design (required)</th></tr></thead>
+<tbody>
+<tr><td>Setting</td><td>AML CR1, transplant-ineligible</td><td>AML CR2, transplant-ineligible</td></tr>
+<tr><td>Agent</td><td>Oral azacitidine (HMA)</td><td>GPS (WT1 vaccine)</td></tr>
+<tr><td>OS HR</td><td><strong>0.69</strong> (95% CI 0.55–0.86), <em>observed</em></td><td>observed HR ≈ <strong>0.64</strong> threshold for significance (design effect 0.63 sits on the boundary)</td></tr>
+<tr><td>OS p-value</td><td>0.0009</td><td>—</td></tr>
+<tr><td>Median OS (active / control)</td><td>24.7 / 14.8 mo</td><td>12.6 / 8.0 mo (assumed)</td></tr>
+</tbody>
+</table>
+<p><strong>Two implications.</strong> (1) REGAL's ≈0.64 is the <em>threshold</em> it must beat, whereas QUAZAR's 0.69 was the <em>observed</em> HR that comfortably cleared its bar — so REGAL effectively needs a <em>truer/bigger</em> effect than QUAZAR delivered, with a vaccine rather than a cytotoxic HMA. (2) QUAZAR's CR1 placebo lived 14.8 months; REGAL's CR2 population is worse-prognosis (Dr. Levy, REGAL Steering Committee: untreated CR2 mOS "about 6 to 8 months"), so the 8-month BAT assumption is <em>defensible</em> for CR2 — but the protocol explicitly permits <strong>venetoclax within BAT</strong>, so the control arm can carry the most active modern AML backbone, which is precisely the HR-erosion risk in §3a. <span class="small">Sources: Wei 2020 NEJM (PMID 33369355); REGAL SAP PR &amp; CT.gov NCT04229979 (BAT defined as investigator's-choice: observation / HMA / venetoclax / LDAC); SELLAS 1/8/25 call (Levy).</span></p>
+
+<h2 id="sec6">6. The class pillar — the WT1-vaccine / AML-immune-maintenance graveyard</h2>
+<p>This is the load-bearing reason Node A does not simply default to "GPS works." Every <em>controlled</em> WT1-vaccine trial across cancers has missed its primary endpoint, and in AML specifically the randomized record is 0-for-1 on a hard endpoint:</p>
+<table>
+<thead><tr><th>Agent / sponsor</th><th>Indication</th><th>Controlled?</th><th>Primary</th><th>Result</th></tr></thead>
+<tbody>
+<tr><td>OCV-501 (Otsuka)</td><td>Elderly AML CR1</td><td>RCT vs placebo</td><td>DFS</td><td><strong>MISS</strong> — DFS HR 0.93, p=0.77; OS p=0.85 (Kiguchi 2021); flat at 5-yr, DFS 36.0% vs 33.7% (Naoe 2023)</td></tr>
+<tr><td>GPS (SELLAS)</td><td>Mesothelioma adjuvant</td><td>RCT vs adjuvant</td><td>1-yr PFS</td><td><strong>MISS</strong> (underpowered; Zauderer 2017)</td></tr>
+<tr><td>DSP-7888 (Sumitomo)</td><td>Recurrent glioblastoma</td><td>RCT vs bevacizumab</td><td>OS</td><td><strong>MISS</strong> — terminated for futility (WIZARD 201G, 2021)</td></tr>
+<tr><td><strong>GPS (SELLAS) — REGAL</strong></td><td><strong>AML CR2 maintenance</strong></td><td><strong>RCT vs BAT</strong></td><td><strong>OS</strong></td><td><strong>PENDING — would be the FIRST positive randomized WT1-vaccine OS result in AML</strong></td></tr>
+</tbody>
+</table>
+<p><strong>A fairness caveat we weight explicitly.</strong> The table is partly selection-biased against GPS. The <em>only truly comparable randomized cell</em> — randomized, AML, hard endpoint — is <strong>OCV-501</strong>, and that construct was a single class-II helper peptide with no direct CTL arm (the weakest design in §7). The mesothelioma and glioblastoma failures are <em>different diseases</em> with hostile, bulky-tumor microenvironments, not MRD-state hematologic maintenance. So the honest statement is "<strong>0-for-1 in the comparable setting, and that 1 was the least sophisticated construct</strong>" — not "0-for-a-graveyard." The class signal still earns real weight because of a <em>mechanistic</em>, construct-agnostic liability, not a body count:</p>
+<div class="flag-card"><span class="num">▼</span><strong>Central tolerance — the mechanism-level liability.</strong> WT1 is a self-antigen; the high-avidity T-cell clones a vaccine needs are largely deleted during thymic selection. Uttenthal 2014 showed vaccine-induced WT1-specific CD8 cells fail to re-expand on antigen re-exposure ex vivo, while CMV-specific cells from the <em>same</em> patients expand normally — a <em>mechanistic basis</em> (not a clinical demonstration) for why <em>measurable</em> WT1 immunogenicity may not translate into <em>protection</em>. Heteroclitic peptides raise apparent immunogenicity (more T cells you can count) without proving those clones are functionally cytolytic against leukemic stem cells. This is the cleanest explanation for a class that is uniformly immunogenic yet 0-for-N on controlled efficacy. <span class="small">Uttenthal 2014, Br J Haematol, doi:10.1111/bjh.12637.</span></div>
+<blockquote>Charlie's verification (dataroom <code>charlie_wt1_verification/</code>) found the class numbers <strong>quantitatively accurate</strong> and the Uttenthal 2014 re-stimulation failure "fully verbatim…the mechanism-level kill shot." The bull's strongest legitimate rebuttal is <strong>construct heterogeneity</strong> — GPS is a heteroclitic, multi-epitope, class-I+II construct, arguably "a different beast" from the single-peptide failures (§7). That argument is biologically plausible but <em>clinically unproven</em>, and REGAL is its first real test.</blockquote>
+
+<h2 id="sec7">7. The bull's best card — GPS is the most sophisticated WT1 construct, and it is immunogenic</h2>
+<p>The strongest pro-GPS argument is that the failed WT1 vaccines are <em>not the same molecule</em> — most were single-epitope or single-HLA-class constructs, whereas GPS is multivalent, heteroclitic, and covers both T-cell arms. This is a <strong>genuine, verifiable structural difference</strong> and is why GPS does not deserve the raw 0-for-N class rate without adjustment.</p>
+<table>
+<thead><tr><th>Construct</th><th>Epitopes / valency</th><th>HLA class (T-cell arm)</th><th>Heteroclitic?</th><th>Controlled result</th></tr></thead>
+<tbody>
+<tr><td><strong>GPS (SELLAS)</strong></td><td><strong>4 peptides, multi-epitope</strong> (2 native + 2 mutated)</td><td><strong>I + II (CD8 killer + CD4 helper)</strong>; ~90% HLA</td><td><strong>Yes</strong> — affinity-enhanced</td><td><strong>PENDING (REGAL)</strong></td></tr>
+<tr><td>OCV-501 (Otsuka)</td><td>Single 16-mer helper peptide</td><td>II only (CD4; no direct CTL)</td><td>No</td><td>MISS (flat DFS/OS)</td></tr>
+<tr><td>WT1-126 (Keilholz)</td><td>Single 9-mer</td><td>I only (CD8; A*02:01)</td><td>No</td><td>Immunologic only</td></tr>
+<tr><td>DSP-7888 / ombipepimut-S</td><td>2 peptides (killer + helper)</td><td><strong>I + II</strong></td><td>Partial</td><td>MISS (GBM futility)</td></tr>
+<tr><td>DC-WT1 (Anguille)</td><td><strong>Whole WT1 mRNA</strong> (maximal breadth)</td><td>I + II, <strong>not HLA-limited</strong></td><td>n/a</td><td>Responder-split only (no RCT win)</td></tr>
+</tbody>
+</table>
+<div class="bull-card"><span class="num">▲</span><strong>GPS is the only agent combining</strong> (a) multivalency across epitopes, (b) <em>both</em> class-I and class-II coverage (CD8 killer + CD4 helper cross-talk), (c) heteroclitic affinity-enhancement engineered to overcome self-tolerance, and (d) documented epitope spreading — vaccinated patients develop measurable T-cell reactivity to numerous additional WT1 epitope responses they were never vaccinated against (Koehne, EBMT 2018, conference abstract — abstract-grade evidence). Immunogenicity is real and high (~88–91% antigen-specific T-cell response on file). WT1 is the NCI's #1-ranked cancer antigen, expressed in ~97% of AML. <strong>Epitope spreading is the best biological answer to the tolerance objection:</strong> even if the four vaccine-targeted high-avidity clones are partly deleted, tumor-cell killing releases antigen that primes a broader, endogenously-selected repertoire the thymus may not have fully tolerized.</div>
+<p><strong>But the differentiation is bounded.</strong> GPS's own efficacy file is coherent yet entirely uncontrolled, surrogate, or survivorship-confounded:</p>
+<ul>
+<li><strong>CR2 pilot (Brayer 2015, Moffitt — confirmed galinpepimut-S, doi:10.1002/ajh.24014):</strong> the deck's lead bull exhibit and most setting-relevant datapoint, but an <strong>n=16 single-arm Phase 1 pilot</strong> (14 AML + 2 MDS); the CR2 survival comparison is the paper's own <em>"unplanned analysis"</em> vs a retrospective historical cohort — <strong>OS 495 d (16.3 mo) vs 165 d (5.4 mo), p=0.0175; but DFS non-significant (319 vs 131 d, p=0.19)</strong>. The deck markets "21.0 mo" (a "data on file 2020" upgrade of the paper's 16.3) and shows only the OS arm. <span class="status inconsistent">deck 21.0 vs paper 16.3; DFS NS</span></li>
+<li><strong>CR1 Phase 2 (Maslak 2018, n=22, single-arm):</strong> met prespecified 3-yr OS &gt;34% (achieved 47%). <em>Uncontrolled; OS-from-diagnosis inflates the headline; not the REGAL setting.</em></li>
+<li><strong>Immunogenicity / epitope spreading:</strong> real and high. <em>But immunogenicity ≠ survival; the entire WT1 class is immunogenic and still 0-for-N on controlled OS.</em></li>
+</ul>
+<p><strong>Net on the bull card:</strong> GPS's structural differentiation is real and justifies crediting it <em>above</em> the bare class rate — which the synthesis does (it does not zero out). The honest cap is not the imperfect counter-precedents (DSP-7888 failed in a far harsher GBM setting; whole-antigen vaccines were never run as randomized OS trials) but the unproven question of <em>functional avidity against a self-antigen</em>. Epitope spreading is the best reason that question might resolve in GPS's favour — and REGAL is the first controlled test of it.</p>
+
+<h2 id="sec8">8. Probability synthesis — prior over the true HR × power</h2>
+<p>The single most likely outcome above is derived, not asserted. Construct a <strong>prior over GPS's true OS HR</strong>, convolved with the <strong>win probability at 80 events</strong> for each HR (computed from the observed-HR significance boundary ≈0.645; SE of ln HR ≈ 0.224, §3). This captures "tail wins" (true HR 0.70 still wins sometimes) and "tail losses" (true HR 0.62 still loses sometimes).</p>
+<table class="num">
+<thead><tr><th>True OS HR</th><th>Prior weight (class-anchored)</th><th>P(win at 80 events)</th><th>Contribution</th></tr></thead>
+<tbody>
+<tr><td>≤ 0.60 (GPS beats its design)</td><td>13%</td><td>~75%</td><td>9.8%</td></tr>
+<tr><td>0.60–0.70 (≈ design effect)</td><td>15%</td><td>~45%</td><td>6.8%</td></tr>
+<tr><td>0.70–0.85 (modest benefit)</td><td>25%</td><td>~20%</td><td>5.0%</td></tr>
+<tr><td>0.85–1.00 (minimal/flat)</td><td>30%</td><td>~6%</td><td>1.8%</td></tr>
+<tr><td>&gt; 1.00 (no benefit)</td><td>17%</td><td>~2%</td><td>0.3%</td></tr>
+<tr><td><strong>Total</strong></td><td><strong>100%</strong></td><td>—</td><td><strong>≈ 24%</strong></td></tr>
+</tbody>
+</table>
+<p><strong>The pure prior×power convolution ≈ 24%.</strong> Two reframings vs a naive read: (1) <strong>even the "≈ design effect" row wins under half the time</strong>, because HR 0.636 is the <em>threshold</em>, not a powered assumption — GPS must <em>beat</em> its design to be a likely winner; (2) the prior puts most mass (≈47%) on HR ≥0.85, reflecting the class signal.</p>
+<p><strong>One adjustment — pricing the hidden interim posterior.</strong> The convolution prices only <em>our</em> prior; it ignores that the IDMC has reviewed unblinded data three-plus times across 18 months under a live efficacy boundary, never flagged futility or modified the trial, while pooled survival ran dramatically long and management kept guiding toward readout. Each signal is individually weak, but their <em>conjunction</em> is somewhat more likely under a separating trial than a flat one, and the information is <strong>one-directional</strong> (it can only reveal a separation our prior under-credits). Folding in a <em>judgmental</em> ~+4-point bump (not a computed posterior update — the IDMC holds the data, we do not) moves the win estimate from ~24% to <strong>~28%</strong>. We do not go further (the bull case argues low-to-mid 30s) because central tolerance is a real, construct-agnostic risk and GPS has zero randomized OS evidence.</p>
+<p><strong>From win-probability to the outcome partition.</strong> The three outcome weights are <em>not</em> three independent estimates — two are forced by the first. Take P(stat-sig win) ≈ 28% and the Node A midpoint P(GPS directionally better, true HR &lt; 1.0) ≈ 63%. Then: directional-but-misses = P(HR&lt;1.0) − P(win) = 63% − 28% ≈ <strong>35%</strong>; flat/negative = 1 − P(HR&lt;1.0) ≈ <strong>37%</strong>. (The implied P(HR&lt;1.0) = 28% + 35% = 63% sits squarely inside Node A's stated 60–65% — the partition is internally consistent, not reverse-engineered to sum to 100.) The two failure flavours are close and are best read together as a single <strong>~72% "no significant win."</strong> <strong>That ~35-point wedge between "directionally better" and "significantly better" is the entire investment problem.</strong></p>
+
+<h2 id="sec9">9. The one input that would change this</h2>
+<p>Per the method, residual uncertainty is named as a lever, not a hedge. Two inputs — and essentially only two — can move the conclusion off "misses significance":</p>
+<div class="flag-card"><span class="num">1</span><strong>The hidden IDMC posterior.</strong> If the observed HR at 60 events was already, say, ~0.6, the 80-event win probability is far above 28% and the modal outcome flips to a win. We price the <em>prior</em> and fold in only a modest one-directional adjustment (§8); the IDMC holds the <em>posterior</em> and isn't telling. This is the single biggest reason our estimate could be too low, and it is the axis on which a reasonable bull gets to the mid-30s. <em>It can only cut in GPS's favour</em> — the IDMC's silence cannot make the drug worse than our prior.</div>
+<div class="flag-card"><span class="num">2</span><strong>The control-arm (BAT) benchmark — the softest clinical input, ±10 points.</strong> The whole HR-erosion case hinges on the "~8-month BAT" assumption, which rests on one KOL quote (Levy) and historical CR2 cohorts, not a venetoclax-era CR2 real-world dataset. If REGAL's BAT arm genuinely runs ~8 months (adverse-genetics CR2), the bar is easier than we assume and we are too bearish; if it runs ~12–14 months (venetoclax allowed in BAT), the HR erodes and the directional-miss outcome hardens. This single input swings the estimate by ±10 points and is unresolved.</div>
+<p><strong>Everything else is second-order.</strong> The exact protocol power/boundary (Schoenfeld approximation vs the precise OBF spend) shifts per-row win probabilities but the headline is robust to ±5 points of it; small-N variance cuts both ways; and the question we answered is the clean statistical binary — a bare win on a fragile open-label 126-patient dataset may still draw FDA single-trial scrutiny, while a directional miss with a strong MRD/landmark-OS secondary could still be developable.</p>
+
+<h2 id="sec10">10. What I'm least confident about (the failure surface)</h2>
+<div class="flag-card"><span class="num">1</span><strong>The blinded interim could already encode a winning separation we can't see.</strong> If the observed HR at 60 events was ~0.6, the win probability is far above 28%. We price the prior and fold in only a modest asymmetry adjustment; the bull case rests largely on weighting this more heavily. Biggest single reason the estimate could be too low.</div>
+<div class="flag-card"><span class="num">2</span><strong>The control-arm benchmark cuts both ways (§9).</strong> ~8-mo BAT → we're too bearish; ~12–14 mo venetoclax-era BAT → directional miss hardens. ±10 points, unresolved.</div>
+<div class="flag-card"><span class="num">3</span><strong>Exact protocol power / boundary.</strong> §3 and §8 use the Schoenfeld normal approximation (observed-HR boundary ≈0.645). The precise design power, exact alpha spent at the 60-event interim under the amended OBF function, and any stratified/covariate-adjusted plan were <em>not</em> recovered from a primary protocol/SAP — only from the 2022 PR. Headline robust to ±5 points; largest modeling assumption.</div>
+<div class="flag-card"><span class="num">4</span><strong>"Statistically significant" ≠ "approvable," and vice-versa.</strong> A bare 80-event open-label win might still draw FDA scrutiny; a directional miss with a strong secondary could still be developable. Our ~28% prices the statistical binary only.</div>
+<div class="flag-card"><span class="num">5</span><strong>Single-trial, open-label, 1:1, ~126 patients.</strong> Small N makes the result sensitive to a handful of deaths and to any imbalance the open-label design lets creep in. High variance cuts both ways.</div>
+
+<div class="footer">Prepared by Triple Gate Capital, LP &nbsp;|&nbsp; 2026-06-23<br>
+Sources: SELLAS press releases 11/14/22, 1/23/25, 8/7/25, 12/29/25, 5/12/26; SELLAS Corporate Overview Feb 2026; SELLAS 2025 Guidance Call 1/8/25; Charlie WT1 verification (dataroom); Wong 2019 (PMC6409418); JAMA Oncol 2025 (PMID 40451185); Wei 2020 NEJM/QUAZAR (PMID 33369355); Kiguchi 2021 (PMID 34677647); Naoe 2023 (PMID 37093243); Zauderer 2017 (PMID 28972039); Uttenthal 2014 (Br J Haematol, doi:10.1111/bjh.12637); Brayer 2015 (Am J Hematol, PMID 25802083); Koehne EBMT 2018. Clinical numbers cite primary sources; no values invented. Probability figures are analytical judgment, not data.</div>
+
+</body>
+</html>
